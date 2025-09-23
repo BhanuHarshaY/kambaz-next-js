@@ -1,9 +1,11 @@
 "use client"
+import Image from "next/image";
 
 export default function Lab1() {
   return (
     <div id="wd-lab1">
       <h2>Lab 1</h2>
+      <h2>Name: Bhanu Harsha Y | Section: 04 </h2>
       <h3>HTML Examples</h3>
       <div id="wd-h-tag">
         <h4>Heading Tags</h4>
@@ -43,20 +45,24 @@ tag to tell browsers to render the gaps.
   </ol>
 My favorite recipe:
   <ol id="wd-your-favorite-recipe">
-    {/* complete on your own */}
+   <li> Take a bowl and crack 3 eggs into it and add onions, salt and chilli powder to it. </li>
+    <li> Beat the eggs well using a beater.Heat a pan and add a teaspoon of oil to it. </li>
+    <li> Now pour the egg mixture on the pan and cook it for few minutes. </li>
   </ol>
 <h5>Unordered List Tag</h5>
 My favorite books (in no particular order)
 <ul id="wd-my-books">
   <li>Dune</li>
   <li>Lord of the Rings</li>
-  <li>Ender&apos;s Game</li>
+  <li>Ender&apos;git s Game</li>
   <li>Red Mars</li>
   <li>The Forever War</li>
 </ul>
 Your favorite books (in no particular order)
 <ul id="wd-your-books">
-  {/* complete on your own */}
+  <li>Murder on the Orient Express</li>
+  <li> Wings of fire</li>
+  <li> Steve Jobs: His Own Words and Wisdom</li>
 </ul>
 
       </div>
@@ -84,11 +90,60 @@ Your favorite books (in no particular order)
               <td>2/10/21</td>
               <td>90</td>
             </tr>
+            <tr>
+              <td>Q3</td>
+              <td>Java script</td>
+              <td>2/19/21</td>
+              <td>97</td>
+            </tr>
+            <tr>
+              <td>Q4</td>
+              <td>React.js</td>
+              <td>2/26/21</td>
+              <td>95</td>
+            </tr>
+            <tr>
+              <td>Q5</td>
+              <td>Redux</td>
+              <td>3/1/21</td>
+              <td>80</td>
+            </tr>
+            <tr>
+              <td>Q6</td>
+              <td>Next.js</td>
+              <td>3/10/21</td>
+              <td>96</td>
+            </tr>
+            <tr>
+              <td>Q7</td>
+              <td>Routing</td>
+              <td>3/17/21</td>
+              <td>93</td>
+            </tr>
+            <tr>
+              <td>Q8</td>
+              <td>Node.js</td>
+              <td>3/25/21</td>
+              <td>96</td>
+            </tr>
+            <tr>
+              <td>Q9</td>
+              <td>MongoDB</td>
+              <td>3/31/21</td>
+              <td>100</td>
+            </tr>
+            <tr>
+              <td>Q10</td>
+              <td>Mongoose</td>
+              <td>4/6/21</td>
+              <td>91</td>
+            </tr>
+
           </tbody>
           <tfoot>
             <tr>
               <td colSpan={3}>Average</td>
-              <td>90</td>
+              <td>92.3</td>
             </tr>
           </tfoot>
         </table>
@@ -100,9 +155,16 @@ Your favorite books (in no particular order)
   Loading an image from the internet: <br />
   <img id="wd-starship" width="400px"   src="https://www.staradvertiser.com/wp-content/uploads/2021/08/web1_Starship-gap2.jpg" />
   <br />
-  Loading a local image:
+  <p>Loading a local image:</p>
+  <Image
+    id="wd-teslabot"
+    src="/images/teslabot.jpg"
+    alt="Teslabot"
+    width={200}
+    height={200}
+  />
   <br />
-  <img id="wd-teslabot" src="/images/teslabot.jpg" height="200px" /></div>
+  </div>
   <div id="wd-forms">
   <h4>Form Elements</h4>
   <form id="wd-text-fields">
@@ -210,7 +272,7 @@ Please
 <a href="https://www.lipsum.com" id="wd-lipsum">click here</a>
 to get dummy text<br/>
 Please
-<a href="https://www.lipsum.com" id="wd-lipsum">click here</a>
+<a href="https://github.com/BhanuHarshaY/kambaz-next-js" id="wd-lipsum">click here</a>
 to visit my GitHub<br/>
 
 
