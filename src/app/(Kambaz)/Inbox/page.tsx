@@ -1,6 +1,3 @@
-export default function Inbox() {
-  return (
-    <div>
-      <h2>Inbox</h2>
-    </div>
-);}
+export default function Inboxpage() {
+  return <h2>Inbox will be devloped soon</h2>;
+}
