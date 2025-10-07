@@ -30,8 +30,8 @@ export default function AssignmentEditor() {
         </Form.Group>
 
         {/* Points */}
-        <Form.Group as={Row} className="mb-3">
-          <Form.Label column sm={3} htmlFor="wd-points">
+        <Form.Group as={Row} className="mb-3 align-items-center">
+          <Form.Label column sm={3} htmlFor="wd-points" className="text-end">
             Points
           </Form.Label>
           <Col sm={9}>
@@ -40,8 +40,8 @@ export default function AssignmentEditor() {
         </Form.Group>
 
         {/* Assignment Group */}
-        <Form.Group as={Row} className="mb-3">
-          <Form.Label column sm={3} htmlFor="wd-group">
+        <Form.Group as={Row} className="mb-3 align-items-center">
+          <Form.Label column sm={3} htmlFor="wd-group" className="text-end">
             Assignment Group
           </Form.Label>
           <Col sm={9}>
@@ -55,8 +55,8 @@ export default function AssignmentEditor() {
         </Form.Group>
 
         {/* Display Grade as */}
-        <Form.Group as={Row} className="mb-3">
-          <Form.Label column sm={3} htmlFor="wd-display-grade-as">
+        <Form.Group as={Row} className="mb-3 align-items-center">
+          <Form.Label column sm={3} htmlFor="wd-display-grade-as" className="text-end">
             Display Grade as
           </Form.Label>
           <Col sm={9}>
@@ -71,7 +71,7 @@ export default function AssignmentEditor() {
 
         {/* Submission Type */}
         <Form.Group as={Row} className="mb-3">
-          <Form.Label column sm={3} htmlFor="wd-submission-type">
+          <Form.Label column sm={3} htmlFor="wd-submission-type" className="text-end">
             Submission Type
           </Form.Label>
           <Col sm={9}>
@@ -95,7 +95,7 @@ export default function AssignmentEditor() {
 
         {/* Assign */}
         <Form.Group as={Row} className="mb-3">
-          <Form.Label column sm={3}>
+          <Form.Label column sm={3} className="text-end">
             Assign
           </Form.Label>
           <Col sm={9}>
