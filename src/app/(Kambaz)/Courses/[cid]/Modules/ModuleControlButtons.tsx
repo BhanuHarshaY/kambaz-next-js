@@ -1,14 +1,14 @@
 
-import { BsPlus } from "react-icons/bs";
 import { IoEllipsisVertical } from "react-icons/io5";
 import GreenCheckmark from "./GreenCheckmark";
+import { FaPlus } from "react-icons/fa6";
 
 export default function ModuleControlButtons() {
   return (
-    <div className="d-flex align-items-center gap-1">
+    <div className="float-end">
       <GreenCheckmark />
-      <BsPlus className="fs-4" />
-      <IoEllipsisVertical className="fs-4" />
+      <FaPlus className="ms-2" />
+      <IoEllipsisVertical className="fs-4 ms-2" />
     </div>
   );
 }

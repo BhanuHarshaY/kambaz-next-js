@@ -12,95 +12,67 @@ import { usePathname } from "next/navigation";
 export default function KambazNavigation() {
   const pathname = usePathname();
 
-  
-  const getLinkClasses = (link: string, isAccount = false) => {
-    const isActive = pathname.startsWith(link);
-    if (isActive) {
-      return "d-block text-decoration-none text-center bg-white text-danger";
-    }
-    return `d-block text-decoration-none text-center bg-black ${
-      isAccount ? "text-white" : "text-white"
-    }`;
-  };
-
-  const getIconClasses = (link: string, isAccount = false) => {
-    const isActive = pathname.startsWith(link);
-    if (isActive) {
-      return "fs-1 text-danger";
-    }
-    return isAccount ? "fs-1 text-white" : "fs-1 text-danger";
-  };
+  const links = [
+    { label: "Dashboard", path: "/Dashboard", icon: AiOutlineDashboard },
+    { label: "Courses", path: "/Dashboard", icon: LiaBookSolid }, 
+    { label: "Calendar", path: "/Calendar", icon: IoCalendarOutline },
+    { label: "Inbox", path: "/Inbox", icon: FaInbox },
+    { label: "Labs", path: "/Labs", icon: LiaCogSolid },
+  ];
 
   return (
     <ListGroup
-      className="rounded-0 position-fixed bottom-0 top-0 d-none d-md-block bg-black z-2"
-      style={{ width: 110 }}
       id="wd-kambaz-navigation"
+      style={{ width: 110 }}
+      className="rounded-0 position-fixed bottom-0 top-0 d-none d-md-block bg-black z-2"
     >
-      {/* Northeastern University Logo */}
+      {/* NEU Logo */}
       <ListGroupItem
-        className="bg-black border-0 text-center"
-        as="a"
+        id="wd-neu-link"
         target="_blank"
         href="https://www.northeastern.edu/"
-        id="wd-neu-link"
+        action
+        className="bg-black border-0 text-center"
       >
-        <Image
-          src="/images/NEU.png"
-          alt="Northeastern University"
-          width={70}
-          height={70}
-          priority
-        />
+        <Image src="/images/NEU.png" alt="NEU Logo" width={70} height={70} priority />
       </ListGroupItem>
 
       {/* Account */}
-      <ListGroupItem className="border-0 p-0">
-        <Link href="/Account" id="wd-account-link" className={getLinkClasses("/Account", true)}>
-          <FaRegCircleUser className={getIconClasses("/Account", true)} />
-          <div className="fw-medium">Account</div>
-        </Link>
+      <ListGroupItem
+        as={Link}
+        href="/Account"
+        className={`text-center border-0 bg-black ${
+          pathname.includes("Account") ? "bg-white text-danger" : "bg-black text-white"
+        }`}
+      >
+        <FaRegCircleUser
+          className={`fs-1 ${
+            pathname.includes("Account") ? "text-danger" : "text-white"
+          }`}
+        />
+        <br />
+        Account
       </ListGroupItem>
 
-      {/* Dashboard */}
-      <ListGroupItem className="border-0 p-0">
-        <Link href="/Dashboard" id="wd-dashboard-link" className={getLinkClasses("/Dashboard")}>
-          <AiOutlineDashboard className={getIconClasses("/Dashboard")} />
-          <div className="fw-medium">Dashboard</div>
-        </Link>
-      </ListGroupItem>
-
-      {/* Courses - Now redirects to Dashboard */}
-      <ListGroupItem className="border-0 p-0">
-        <Link href="/Dashboard" id="wd-courses-link" className={getLinkClasses("/Courses")}>
-          <LiaBookSolid className={getIconClasses("/Courses")} />
-          <div className="fw-medium">Courses</div>
-        </Link>
-      </ListGroupItem>
-
-      {/* Calendar */}
-      <ListGroupItem className="border-0 p-0">
-        <Link href="/Calendar" id="wd-calendar-link" className={getLinkClasses("/Calendar")}>
-          <IoCalendarOutline className={getIconClasses("/Calendar")} />
-          <div className="fw-medium">Calendar</div>
-        </Link>
-      </ListGroupItem>
-
-      {/* Inbox */}
-      <ListGroupItem className="border-0 p-0">
-        <Link href="/Inbox" id="wd-inbox-link" className={getLinkClasses("/Inbox")}>
-          <FaInbox className={getIconClasses("/Inbox")} />
-          <div className="fw-medium">Inbox</div>
-        </Link>
-      </ListGroupItem>
-
-      {/* Labs */}
-      <ListGroupItem className="border-0 p-0">
-        <Link href="/Labs" id="wd-labs-link" className={getLinkClasses("/Labs")}>
-          <LiaCogSolid className={getIconClasses("/Labs")} />
-          <div className="fw-medium">Labs</div>
-        </Link>
-      </ListGroupItem>
+      {/* Dynamically generated links */}
+      {links.map((link) => {
+        const isActive = pathname.includes(link.label);
+        const Icon = link.icon;
+        return (
+          <ListGroupItem
+            key={`${link.path}-${link.label}`}
+            as={Link}
+            href={link.path}
+            className={`bg-black text-center border-0 ${
+              isActive ? "text-danger bg-white" : "text-white bg-black"
+            }`}
+          >
+            <Icon className="fs-1 text-danger" />
+            <br />
+            {link.label}
+          </ListGroupItem>
+        );
+      })}
     </ListGroup>
   );
 }
