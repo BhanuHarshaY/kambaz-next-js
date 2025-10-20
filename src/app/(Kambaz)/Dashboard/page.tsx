@@ -31,7 +31,7 @@ export default function Dashboard() {
                 <Link href={`/Courses/${course._id}/Home`}
                       className="wd-dashboard-course-link text-decoration-none text-dark" >
                   <CardImg 
-                    src={courseImages[course._id] || defaultImage} 
+                    src={courseImages[course._id] } 
                     variant="top" 
                     width="100%" 
                     height={160}
