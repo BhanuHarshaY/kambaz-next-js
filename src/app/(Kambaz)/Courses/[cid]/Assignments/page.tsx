@@ -1,4 +1,4 @@
-
+// File: src/app/(Kambaz)/Courses/[cid]/Assignments/page.tsx
 "use client";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -113,18 +113,12 @@ export default function Assignments() {
                       <BsGripVertical className="me-2 fs-3" />
                       <RxFileText className="me-3 fs-4 text-success" />
                       <div>
-                        {canEdit ? (
-                          <Link
-                            href={`/Courses/${cid}/Assignments/${assignment._id}`}
-                            className="wd-assignment-link text-dark fw-bold text-decoration-none"
-                          >
-                            {assignment.title}
-                          </Link>
-                        ) : (
-                          <span className="text-dark fw-bold">
-                            {assignment.title}
-                          </span>
-                        )}
+                        <Link
+                          href={`/Courses/${cid}/Assignments/${assignment._id}`}
+                          className="wd-assignment-link text-dark fw-bold text-decoration-none"
+                        >
+                          {assignment.title}
+                        </Link>
                         <div className="text-muted" style={{ fontSize: "0.85rem" }}>
                           <span className="text-danger">Multiple Modules</span> |{" "}
                           <strong>Not available until</strong> {new Date(assignment.availableDate).toLocaleDateString()} |{" "}

@@ -42,6 +42,10 @@ export default function AssignmentEditor() {
   const isNew = aid === "new";
   const existingAssignment = assignments.find((a) => a._id === aid);
   
+  // Check if user can edit (Faculty or TA)
+  const canEdit = (currentUser as CurrentUser)?.role === "FACULTY" || 
+                  (currentUser as CurrentUser)?.role === "TA";
+  
   const [assignmentForm, setAssignmentForm] = useState<AssignmentForm>({
     title: "",
     description: "",
@@ -64,13 +68,12 @@ export default function AssignmentEditor() {
     }
   }, [existingAssignment, isNew]);
 
-  // Redirect if not faculty or TA
+  // Redirect if not faculty/TA and trying to create new
   useEffect(() => {
-    const userRole = (currentUser as CurrentUser)?.role;
-    if (userRole !== "FACULTY" && userRole !== "TA") {
+    if (isNew && !canEdit) {
       router.push(`/Courses/${cid}/Assignments`);
     }
-  }, [currentUser, cid, router]);
+  }, [isNew, canEdit, cid, router]);
 
   const handleSave = () => {
     if (isNew) {
@@ -101,14 +104,15 @@ export default function AssignmentEditor() {
 
   return (
     <Container>
-      <h2>{isNew ? "Create Assignment" : "Edit Assignment"}</h2>
+      <h2>{canEdit ? (isNew ? "Create Assignment" : "Edit Assignment") : "View Assignment"}</h2>
       
       <FormLabel htmlFor="wd-name">Assignment Name</FormLabel>
       <FormControl
         id="wd-name"
         value={assignmentForm.title}
-        onChange={(e) => setAssignmentForm({ ...assignmentForm, title: e.target.value })}
+        onChange={(e) => canEdit && setAssignmentForm({ ...assignmentForm, title: e.target.value })}
         className="mb-3"
+        disabled={!canEdit}
       />
 
       <FormControl
@@ -117,7 +121,8 @@ export default function AssignmentEditor() {
         rows={10}
         className="mb-3"
         value={assignmentForm.description}
-        onChange={(e) => setAssignmentForm({ ...assignmentForm, description: e.target.value })}
+        onChange={(e) => canEdit && setAssignmentForm({ ...assignmentForm, description: e.target.value })}
+        disabled={!canEdit}
       />
 
       <Row className="mb-3">
@@ -129,7 +134,8 @@ export default function AssignmentEditor() {
             id="wd-points" 
             value={assignmentForm.points} 
             type="number"
-            onChange={(e) => setAssignmentForm({ ...assignmentForm, points: parseInt(e.target.value) })}
+            onChange={(e) => canEdit && setAssignmentForm({ ...assignmentForm, points: parseInt(e.target.value) })}
+            disabled={!canEdit}
           />
         </Col>
       </Row>
@@ -139,7 +145,7 @@ export default function AssignmentEditor() {
           Assignment Group
         </FormLabel>
         <Col sm={10}>
-          <FormSelect id="wd-group">
+          <FormSelect id="wd-group" disabled={!canEdit}>
             <option>ASSIGNMENTS</option>
             <option>QUIZZES</option>
             <option>EXAMS</option>
@@ -152,7 +158,7 @@ export default function AssignmentEditor() {
           Display Grade as
         </FormLabel>
         <Col sm={10}>
-          <FormSelect id="wd-display-grade-as">
+          <FormSelect id="wd-display-grade-as" disabled={!canEdit}>
             <option>Percentage</option>
             <option>Points</option>
           </FormSelect>
@@ -165,7 +171,7 @@ export default function AssignmentEditor() {
         </FormLabel>
         <Col sm={10}>
           <div className="border p-3 rounded">
-            <FormSelect id="wd-submission-type" className="mb-3">
+            <FormSelect id="wd-submission-type" className="mb-3" disabled={!canEdit}>
               <option>Online</option>
               <option>In-Person</option>
             </FormSelect>
@@ -178,6 +184,7 @@ export default function AssignmentEditor() {
                   id="wd-text-entry"
                   label="Text Entry"
                   className="m-2"
+                  disabled={!canEdit}
                 />
                 <FormCheck
                   type="checkbox"
@@ -185,24 +192,28 @@ export default function AssignmentEditor() {
                   label="Website URL"
                   className="m-2"
                   defaultChecked
+                  disabled={!canEdit}
                 />
                 <FormCheck
                   type="checkbox"
                   id="wd-media-recordings"
                   label="Media Recordings"
                   className="m-2"
+                  disabled={!canEdit}
                 />
                 <FormCheck
                   type="checkbox"
                   id="wd-student-annotation"
                   label="Student Annotation"
                   className="m-2"
+                  disabled={!canEdit}
                 />
                 <FormCheck
                   type="checkbox"
                   id="wd-file-upload"
                   label="File Upload"
                   className="m-2"
+                  disabled={!canEdit}
                 />
               </div>
             </div>
@@ -219,7 +230,7 @@ export default function AssignmentEditor() {
             <FormLabel htmlFor="wd-assign-to">
               <strong>Assign to</strong>
             </FormLabel>
-            <FormSelect multiple id="wd-assign-to" className="mb-3">
+            <FormSelect multiple id="wd-assign-to" className="mb-3" disabled={!canEdit}>
               <option>Everyone</option>
               <option>Group 1</option>
               <option>Group 2</option>
@@ -233,8 +244,9 @@ export default function AssignmentEditor() {
               type="datetime-local"
               id="wd-due-date"
               value={assignmentForm.dueDate}
-              onChange={(e) => setAssignmentForm({ ...assignmentForm, dueDate: e.target.value })}
+              onChange={(e) => canEdit && setAssignmentForm({ ...assignmentForm, dueDate: e.target.value })}
               className="mb-3"
+              disabled={!canEdit}
             />
 
             <Row>
@@ -246,7 +258,8 @@ export default function AssignmentEditor() {
                   type="datetime-local"
                   id="wd-available-from"
                   value={assignmentForm.availableDate}
-                  onChange={(e) => setAssignmentForm({ ...assignmentForm, availableDate: e.target.value })}
+                  onChange={(e) => canEdit && setAssignmentForm({ ...assignmentForm, availableDate: e.target.value })}
+                  disabled={!canEdit}
                 />
               </Col>
               <Col sm={6}>
@@ -257,7 +270,8 @@ export default function AssignmentEditor() {
                   type="datetime-local"
                   id="wd-available-until"
                   value={assignmentForm.untilDate}
-                  onChange={(e) => setAssignmentForm({ ...assignmentForm, untilDate: e.target.value })}
+                  onChange={(e) => canEdit && setAssignmentForm({ ...assignmentForm, untilDate: e.target.value })}
+                  disabled={!canEdit}
                 />
               </Col>
             </Row>
@@ -267,23 +281,25 @@ export default function AssignmentEditor() {
 
       <hr />
 
-      <div className="text-end">
-        <Button 
-          variant="secondary" 
-          className="me-2" 
-          id="wd-cancel-assignment"
-          onClick={handleCancel}
-        >
-          Cancel
-        </Button>
-        <Button 
-          variant="danger" 
-          id="wd-save-assignment"
-          onClick={handleSave}
-        >
-          Save
-        </Button>
-      </div>
+      {canEdit && (
+        <div className="text-end">
+          <Button 
+            variant="secondary" 
+            className="me-2" 
+            id="wd-cancel-assignment"
+            onClick={handleCancel}
+          >
+            Cancel
+          </Button>
+          <Button 
+            variant="danger" 
+            id="wd-save-assignment"
+            onClick={handleSave}
+          >
+            Save
+          </Button>
+        </div>
+      )}
     </Container>
   );
 }
