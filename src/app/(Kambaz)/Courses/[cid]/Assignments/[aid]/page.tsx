@@ -1,8 +1,10 @@
 
 "use client";
-import Link from "next/link";
-import { useParams } from "next/navigation";
-import * as db from "../../../../Database";
+import { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { useSelector, useDispatch } from "react-redux";
+import { RootState } from "../../../../store";
+import { addAssignment, updateAssignment } from "../reducer";
 import {
   Button,
   Col,
@@ -13,21 +15,99 @@ import {
   Row,
   Container,
 } from "react-bootstrap";
+import { v4 as uuidv4 } from "uuid";
+
+type CurrentUser = {
+  _id: string;
+  role: string;
+} | null;
+
+interface AssignmentForm {
+  title: string;
+  description: string;
+  points: number;
+  dueDate: string;
+  availableDate: string;
+  untilDate: string;
+}
 
 export default function AssignmentEditor() {
   const { cid, aid } = useParams();
-  const assignment = db.assignments.find((a) => a._id === aid);
+  const router = useRouter();
+  const dispatch = useDispatch();
+  
+  const { assignments } = useSelector((state: RootState) => state.assignmentsReducer);
+  const { currentUser } = useSelector((state: RootState) => state.accountReducer);
+  
+  const isNew = aid === "new";
+  const existingAssignment = assignments.find((a) => a._id === aid);
+  
+  const [assignmentForm, setAssignmentForm] = useState<AssignmentForm>({
+    title: "",
+    description: "",
+    points: 100,
+    dueDate: "",
+    availableDate: "",
+    untilDate: "",
+  });
 
-  if (!assignment) {
+  useEffect(() => {
+    if (existingAssignment && !isNew) {
+      setAssignmentForm({
+        title: existingAssignment.title,
+        description: existingAssignment.description,
+        points: existingAssignment.points,
+        dueDate: existingAssignment.dueDate,
+        availableDate: existingAssignment.availableDate,
+        untilDate: existingAssignment.untilDate,
+      });
+    }
+  }, [existingAssignment, isNew]);
+
+  // Redirect if not faculty or TA
+  useEffect(() => {
+    const userRole = (currentUser as CurrentUser)?.role;
+    if (userRole !== "FACULTY" && userRole !== "TA") {
+      router.push(`/Courses/${cid}/Assignments`);
+    }
+  }, [currentUser, cid, router]);
+
+  const handleSave = () => {
+    if (isNew) {
+      const newAssignment = {
+        _id: uuidv4(),
+        course: cid as string,
+        ...assignmentForm,
+      };
+      dispatch(addAssignment(newAssignment));
+    } else {
+      const updatedAssignment = {
+        _id: aid as string,
+        course: cid as string,
+        ...assignmentForm,
+      };
+      dispatch(updateAssignment(updatedAssignment));
+    }
+    router.push(`/Courses/${cid}/Assignments`);
+  };
+
+  const handleCancel = () => {
+    router.push(`/Courses/${cid}/Assignments`);
+  };
+
+  if (!isNew && !existingAssignment) {
     return <Container><p>Assignment not found</p></Container>;
   }
 
   return (
     <Container>
+      <h2>{isNew ? "Create Assignment" : "Edit Assignment"}</h2>
+      
       <FormLabel htmlFor="wd-name">Assignment Name</FormLabel>
       <FormControl
         id="wd-name"
-        defaultValue={assignment.title}
+        value={assignmentForm.title}
+        onChange={(e) => setAssignmentForm({ ...assignmentForm, title: e.target.value })}
         className="mb-3"
       />
 
@@ -36,7 +116,8 @@ export default function AssignmentEditor() {
         id="wd-description"
         rows={10}
         className="mb-3"
-        defaultValue={assignment.description}
+        value={assignmentForm.description}
+        onChange={(e) => setAssignmentForm({ ...assignmentForm, description: e.target.value })}
       />
 
       <Row className="mb-3">
@@ -44,7 +125,12 @@ export default function AssignmentEditor() {
           Points
         </FormLabel>
         <Col sm={10}>
-          <FormControl id="wd-points" defaultValue={assignment.points} type="number" />
+          <FormControl 
+            id="wd-points" 
+            value={assignmentForm.points} 
+            type="number"
+            onChange={(e) => setAssignmentForm({ ...assignmentForm, points: parseInt(e.target.value) })}
+          />
         </Col>
       </Row>
 
@@ -146,7 +232,8 @@ export default function AssignmentEditor() {
             <FormControl
               type="datetime-local"
               id="wd-due-date"
-              defaultValue={assignment.dueDate}
+              value={assignmentForm.dueDate}
+              onChange={(e) => setAssignmentForm({ ...assignmentForm, dueDate: e.target.value })}
               className="mb-3"
             />
 
@@ -158,7 +245,8 @@ export default function AssignmentEditor() {
                 <FormControl
                   type="datetime-local"
                   id="wd-available-from"
-                  defaultValue={assignment.availableDate}
+                  value={assignmentForm.availableDate}
+                  onChange={(e) => setAssignmentForm({ ...assignmentForm, availableDate: e.target.value })}
                 />
               </Col>
               <Col sm={6}>
@@ -168,7 +256,8 @@ export default function AssignmentEditor() {
                 <FormControl
                   type="datetime-local"
                   id="wd-available-until"
-                  defaultValue={assignment.untilDate}
+                  value={assignmentForm.untilDate}
+                  onChange={(e) => setAssignmentForm({ ...assignmentForm, untilDate: e.target.value })}
                 />
               </Col>
             </Row>
@@ -179,16 +268,21 @@ export default function AssignmentEditor() {
       <hr />
 
       <div className="text-end">
-        <Link href={`/Courses/${cid}/Assignments`}>
-          <Button variant="secondary" className="me-2" id="wd-cancel-assignment">
-            Cancel
-          </Button>
-        </Link>
-        <Link href={`/Courses/${cid}/Assignments`}>
-          <Button variant="danger" id="wd-save-assignment">
-            Save
-          </Button>
-        </Link>
+        <Button 
+          variant="secondary" 
+          className="me-2" 
+          id="wd-cancel-assignment"
+          onClick={handleCancel}
+        >
+          Cancel
+        </Button>
+        <Button 
+          variant="danger" 
+          id="wd-save-assignment"
+          onClick={handleSave}
+        >
+          Save
+        </Button>
       </div>
     </Container>
   );

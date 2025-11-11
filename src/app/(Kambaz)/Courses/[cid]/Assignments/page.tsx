@@ -1,7 +1,10 @@
+
 "use client";
 import Link from "next/link";
-import { useParams } from "next/navigation";
-import * as db from "../../../Database";
+import { useParams, useRouter } from "next/navigation";
+import { useSelector, useDispatch } from "react-redux";
+import { RootState } from "../../../store";
+import { deleteAssignment } from "./reducer";
 import {
   Button,
   InputGroup,
@@ -14,12 +17,35 @@ import {
 import { BsGripVertical, BsPlus } from "react-icons/bs";
 import { IoEllipsisVertical, IoSearch } from "react-icons/io5";
 import { IoMdArrowDropdown } from "react-icons/io";
-import { FaCheckCircle } from "react-icons/fa";
+import { FaCheckCircle, FaTrash } from "react-icons/fa";
 import { RxFileText } from "react-icons/rx";
+
+type CurrentUser = {
+  _id: string;
+  role: string;
+} | null;
 
 export default function Assignments() {
   const { cid } = useParams();
-  const assignments = db.assignments;
+  const router = useRouter();
+  const dispatch = useDispatch();
+  
+  const { assignments } = useSelector((state: RootState) => state.assignmentsReducer);
+  const { currentUser } = useSelector((state: RootState) => state.accountReducer);
+
+  const handleDeleteAssignment = (assignmentId: string) => {
+    if (window.confirm("Are you sure you want to remove this assignment?")) {
+      dispatch(deleteAssignment(assignmentId));
+    }
+  };
+
+  const handleAddAssignment = () => {
+    router.push(`/Courses/${cid}/Assignments/new`);
+  };
+
+  // Check if user can edit (Faculty or TA)
+  const canEdit = (currentUser as CurrentUser)?.role === "FACULTY" || 
+                  (currentUser as CurrentUser)?.role === "TA";
 
   return (
     <Container id="wd-assignments">
@@ -36,18 +62,24 @@ export default function Assignments() {
             />
           </InputGroup>
         </div>
-        <div>
-          <Button
-            variant="secondary"
-            className="me-2"
-            id="wd-add-assignment-group"
-          >
-            <BsPlus className="fs-4" /> Group
-          </Button>
-          <Button variant="danger" id="wd-add-assignment">
-            <BsPlus className="fs-4" /> Assignment
-          </Button>
-        </div>
+        {canEdit && (
+          <div>
+            <Button
+              variant="secondary"
+              className="me-2"
+              id="wd-add-assignment-group"
+            >
+              <BsPlus className="fs-4" /> Group
+            </Button>
+            <Button 
+              variant="danger" 
+              id="wd-add-assignment"
+              onClick={handleAddAssignment}
+            >
+              <BsPlus className="fs-4" /> Assignment
+            </Button>
+          </div>
+        )}
       </div>
 
       <ListGroup className="rounded-0">
@@ -81,21 +113,34 @@ export default function Assignments() {
                       <BsGripVertical className="me-2 fs-3" />
                       <RxFileText className="me-3 fs-4 text-success" />
                       <div>
-                        <Link
-                          href={`/Courses/${cid}/Assignments/${assignment._id}`}
-                          className="wd-assignment-link text-dark fw-bold text-decoration-none"
-                        >
-                          {assignment.title}
-                        </Link>
+                        {canEdit ? (
+                          <Link
+                            href={`/Courses/${cid}/Assignments/${assignment._id}`}
+                            className="wd-assignment-link text-dark fw-bold text-decoration-none"
+                          >
+                            {assignment.title}
+                          </Link>
+                        ) : (
+                          <span className="text-dark fw-bold">
+                            {assignment.title}
+                          </span>
+                        )}
                         <div className="text-muted" style={{ fontSize: "0.85rem" }}>
                           <span className="text-danger">Multiple Modules</span> |{" "}
-                          <strong>Not available until</strong> May 6 at 12:00am |{" "}
-                          <strong>Due</strong> May 13 at 11:59pm | 100 pts
+                          <strong>Not available until</strong> {new Date(assignment.availableDate).toLocaleDateString()} |{" "}
+                          <strong>Due</strong> {new Date(assignment.dueDate).toLocaleDateString()} | {assignment.points} pts
                         </div>
                       </div>
                     </div>
                     <div className="d-flex align-items-center">
                       <FaCheckCircle className="text-success me-2" />
+                      {canEdit && (
+                        <FaTrash 
+                          className="text-danger me-2"
+                          style={{ cursor: "pointer" }}
+                          onClick={() => handleDeleteAssignment(assignment._id)}
+                        />
+                      )}
                       <IoEllipsisVertical className="fs-4" />
                     </div>
                   </div>

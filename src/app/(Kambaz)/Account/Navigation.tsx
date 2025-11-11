@@ -1,15 +1,20 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSelector } from "react-redux";
+import { RootState } from "../store";
 
 export default function AccountNavigation() {
   const pathname = usePathname();
-
-  const links = [
-    { href: "/Account/Signin", label: "Signin" },
-    { href: "/Account/Signup", label: "Signup" },
-    { href: "/Account/Profile", label: "Profile" },
-  ];
+  const { currentUser } = useSelector((state: RootState) => state.accountReducer);
+  
+  // Conditional links based on authentication status
+  const links = currentUser 
+    ? [{ href: "/Account/Profile", label: "Profile" }]
+    : [
+        { href: "/Account/Signin", label: "Signin" },
+        { href: "/Account/Signup", label: "Signup" }
+      ];
 
   return (
     <div id="wd-account-navigation" className="list-group">

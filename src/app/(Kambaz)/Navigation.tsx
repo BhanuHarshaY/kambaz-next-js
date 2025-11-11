@@ -1,3 +1,4 @@
+
 "use client";
 
 import Image from "next/image";
@@ -8,9 +9,12 @@ import { FaInbox, FaRegCircleUser } from "react-icons/fa6";
 import { ListGroup, ListGroupItem } from "react-bootstrap";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSelector } from "react-redux";
+import { RootState } from "./store";
 
 export default function KambazNavigation() {
   const pathname = usePathname();
+  const { currentUser } = useSelector((state: RootState) => state.accountReducer);
 
   const links = [
     { label: "Dashboard", path: "/Dashboard", icon: AiOutlineDashboard },
@@ -19,6 +23,13 @@ export default function KambazNavigation() {
     { label: "Inbox", path: "/Inbox", icon: FaInbox },
     { label: "Labs", path: "/Labs", icon: LiaCogSolid },
   ];
+
+  const handleNavClick = (e: React.MouseEvent, path: string) => {
+    // If not logged in and trying to access protected routes, prevent navigation
+    if (!currentUser && path !== "/Account") {
+      e.preventDefault();
+    }
+  };
 
   return (
     <ListGroup
@@ -37,7 +48,7 @@ export default function KambazNavigation() {
         <Image src="/images/NEU.png" alt="NEU Logo" width={70} height={70} priority />
       </ListGroupItem>
 
-      {/* Account */}
+      {/* Account - always accessible */}
       <ListGroupItem
         as={Link}
         href="/Account"
@@ -54,15 +65,32 @@ export default function KambazNavigation() {
         Account
       </ListGroupItem>
 
-      {/* Dynamically generated links */}
+      {/* Other links - show but disable if not authenticated */}
       {links.map((link) => {
         const isActive = pathname.includes(link.label);
         const Icon = link.icon;
+        
+        if (!currentUser) {
+          // Show disabled state when not logged in
+          return (
+            <ListGroupItem
+              key={`${link.path}-${link.label}`}
+              className="bg-black text-center border-0 text-secondary"
+              style={{ cursor: "not-allowed", opacity: 0.5 }}
+            >
+              <Icon className="fs-1 text-secondary" />
+              <br />
+              {link.label}
+            </ListGroupItem>
+          );
+        }
+        
         return (
           <ListGroupItem
             key={`${link.path}-${link.label}`}
             as={Link}
             href={link.path}
+            onClick={(e) => handleNavClick(e, link.path)}
             className={`bg-black text-center border-0 ${
               isActive ? "text-danger bg-white" : "text-white bg-black"
             }`}

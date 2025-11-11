@@ -376,5 +376,19 @@
     "section": "S108",
     "lastActivity": "2020-12-11",
     "totalActivity": "28:22:45"
+  },
+  {
+    "_id": "919",
+    "username": "Bhanu Harsha",
+    "password": "harsha123",
+    "firstName": "Bhanu Harsha",
+    "lastName": "Y",
+    "email": "yanamdala.b@northeastern.edu",
+    "dob": "2991-11-10",
+    "role": "STUDENT",
+    "loginId": "001234597S",
+    "section": "S101",
+    "lastActivity": "2020-12-11",
+    "totalActivity": "28:22:45"
   }
 ]
