@@ -40,7 +40,7 @@ export default function Dashboard() {
   const { currentUser } = useSelector((state: RootState) => state.accountReducer);
   const { enrollments } = useSelector((state: RootState) => state.enrollmentsReducer);
   
-  // State for showing all courses vs enrolled only
+  // State for showing all courses vs enrolled only - default is enrolled only
   const [showAllCourses, setShowAllCourses] = useState(false);
   
   // State for the form that handles both add and edit
@@ -57,6 +57,10 @@ export default function Dashboard() {
   // State to track which course is being edited
   const [editingCourseId, setEditingCourseId] = useState<string | null>(null);
   
+  // Check if current user is student or TA
+  const isStudentOrTA = (currentUser as CurrentUser)?.role === "STUDENT" || 
+                       (currentUser as CurrentUser)?.role === "TA";
+  
   // Check if user is enrolled in a course
   const isEnrolled = (courseId: string): boolean => {
     if (!currentUser) return false;
@@ -69,10 +73,11 @@ export default function Dashboard() {
   
   // Get courses to display based on enrollment filter
   const getDisplayedCourses = (): Course[] => {
+    // When showAllCourses is true, show all courses
     if (showAllCourses) {
       return courses;
     }
-    // Show only enrolled courses
+    // Otherwise, show only enrolled courses
     return courses.filter((course: Course) => isEnrolled(course._id));
   };
   
@@ -81,7 +86,7 @@ export default function Dashboard() {
     if (!currentUser) return;
     
     const userId = (currentUser as CurrentUser)!._id;
-
+    
     if (isEnrolled(courseId)) {
       dispatch(unenrollFromCourse({
         userId: userId,
@@ -177,16 +182,7 @@ export default function Dashboard() {
   
   return (
     <div id="wd-dashboard">
-      <div className="d-flex justify-content-between align-items-center">
-        <h1 id="wd-dashboard-title">Dashboard</h1>
-        <Button
-          variant="primary"
-          onClick={() => setShowAllCourses(!showAllCourses)}
-          className="mb-3"
-        >
-          Enrollments
-        </Button>
-      </div>
+      <h1 id="wd-dashboard-title">Dashboard</h1>
       <hr />
       
       {(currentUser as CurrentUser)?.role === "FACULTY" && (
@@ -229,9 +225,19 @@ export default function Dashboard() {
         </div>
       )}
       
-      <h2 id="wd-dashboard-published">
-        {showAllCourses ? "All Courses" : "Published Courses"} ({displayedCourses.length})
-      </h2>
+      <div className="d-flex justify-content-between align-items-center">
+        <h2 id="wd-dashboard-published">
+          Published Courses ({displayedCourses.length})
+        </h2>
+        {isStudentOrTA && (
+          <Button
+            variant="primary"
+            onClick={() => setShowAllCourses(!showAllCourses)}
+          >
+            Enrollments
+          </Button>
+        )}
+      </div>
       <hr />
       
       <div id="wd-dashboard-courses">
@@ -265,24 +271,52 @@ export default function Dashboard() {
                     {course.description}
                   </CardText>
                   <div className="d-flex justify-content-between align-items-center mt-2">
-                    <div className="d-flex gap-2">
-                      <Button 
-                        variant="primary" 
-                        size="sm"
-                        onClick={() => handleCourseNavigation(course._id)}
-                      >
-                        Go
-                      </Button>
-                      <Button
-                        variant={isEnrolled(course._id) ? "danger" : "success"}
-                        size="sm"
-                        onClick={() => handleEnrollment(course._id)}
-                      >
-                        {isEnrolled(course._id) ? "Unenroll" : "Enroll"}
-                      </Button>
-                    </div>
+                    {/* For Students/TAs */}
+                    {isStudentOrTA && (
+                      <div className="d-flex gap-2">
+                        {/* Always show Go button for enrolled courses */}
+                        {isEnrolled(course._id) && (
+                          <Button 
+                            variant="primary" 
+                            size="sm"
+                            onClick={() => handleCourseNavigation(course._id)}
+                          >
+                            Go
+                          </Button>
+                        )}
+                        {/* Show Enroll/Unenroll only when showAllCourses is true */}
+                        {showAllCourses && (
+                          <Button
+                            variant={isEnrolled(course._id) ? "danger" : "success"}
+                            size="sm"
+                            onClick={() => handleEnrollment(course._id)}
+                          >
+                            {isEnrolled(course._id) ? "Unenroll" : "Enroll"}
+                          </Button>
+                        )}
+                        {/* If not enrolled and not showing all courses, show Enroll button */}
+                        {!isEnrolled(course._id) && !showAllCourses && (
+                          <Button
+                            variant="success"
+                            size="sm"
+                            onClick={() => handleEnrollment(course._id)}
+                          >
+                            Enroll
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                    
+                    {/* For Faculty */}
                     {(currentUser as CurrentUser)?.role === "FACULTY" && (
                       <div className="d-flex gap-2">
+                        <Button 
+                          variant="primary" 
+                          size="sm"
+                          onClick={() => handleCourseNavigation(course._id)}
+                        >
+                          Go
+                        </Button>
                         <Button 
                           variant="warning" 
                           size="sm"
