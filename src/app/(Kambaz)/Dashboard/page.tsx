@@ -41,20 +41,18 @@ export default function Dashboard() {
     redirect("/Account/Signin");
   }
 
-  const studentView = currentUser.role === "STUDENT";
-  const facultyView = currentUser.role === "FACULTY";
+  const isFaculty = currentUser.role === "FACULTY";
+  const isStudent = currentUser.role === "STUDENT";
+  const isTA = currentUser.role === "TA";
   const [showEnrollments, setShowEnrollments] = useState(false);
 
- 
   useEffect(() => {
     const fetchCourses = async () => {
       try {
         if (showEnrollments) {
-          
           const allCourses = await courseClient.fetchAllCourses();
           dispatch(setCourses(allCourses));
         } else {
-          
           const enrolledCourses = await courseClient.findMyCourses();
           dispatch(setCourses(enrolledCourses));
         }
@@ -80,7 +78,6 @@ export default function Dashboard() {
     }
   }, [currentUser, dispatch, showEnrollments]);
 
-  // Add course to server
   const onAddCourse = async () => {
     try {
       const newCourse = await courseClient.createCourse({
@@ -102,7 +99,6 @@ export default function Dashboard() {
     }
   };
 
-  // Update course on server
   const onUpdateCourse = async () => {
     try {
       await courseClient.updateCourse(course);
@@ -116,7 +112,6 @@ export default function Dashboard() {
     }
   };
 
-  // Delete course from server
   const onDeleteCourse = async (courseId: string) => {
     try {
       await courseClient.deleteCourse(courseId);
@@ -126,7 +121,6 @@ export default function Dashboard() {
     }
   };
 
-  // Enroll in course
   const onEnroll = async (courseId: string) => {
     try {
       await courseClient.enrollInCourse(currentUser._id, courseId);
@@ -139,7 +133,6 @@ export default function Dashboard() {
     }
   };
 
-  // Unenroll from course
   const onUnenroll = async (enrollmentId: string) => {
     try {
       await courseClient.unenrollFromCourse(enrollmentId);
@@ -152,7 +145,6 @@ export default function Dashboard() {
     }
   };
 
-  // Check if user is enrolled in a course
   const isEnrolled = (courseId: string) => {
     return enrollments.some(
       (enrollment: any) =>
@@ -180,7 +172,9 @@ export default function Dashboard() {
     <Container id="wd-dashboard">
       <h1 id="wd-dashboard-title">Dashboard</h1>
       <hr />
-      {!studentView && (
+      
+      {/* Only FACULTY can add/update courses - NOT TA */}
+      {isFaculty && (
         <>
           <h5>
             New Course
@@ -216,9 +210,11 @@ export default function Dashboard() {
           <hr />
         </>
       )}
+      
       <h2 id="wd-dashboard-published">
         Published Courses ({courses.length})
-        {studentView && (
+        {/* Both Students AND TAs get Enrollments button */}
+        {(isStudent || isTA) && (
           <Button
             variant="primary"
             className="float-end"
@@ -230,6 +226,7 @@ export default function Dashboard() {
         )}
       </h2>
       <hr />
+      
       <div id="wd-dashboard-courses">
         <Row xs={1} md={5} className="g-4">
           {courses.map((course: any) => (
@@ -243,7 +240,7 @@ export default function Dashboard() {
                   href={`/Courses/${course._id}/Home`}
                   className="wd-dashboard-course-link text-decoration-none text-dark"
                   onClick={(e) => {
-                    if (!isEnrolled(course._id) && studentView) {
+                    if (!isEnrolled(course._id) && (isStudent || isTA)) {
                       e.preventDefault();
                     }
                   }}
@@ -267,8 +264,8 @@ export default function Dashboard() {
                       {course.description}
                     </CardText>
 
-                    {/* Student View */}
-                    {studentView && (
+                    {/* Student/TA View */}
+                    {(isStudent || isTA) && (
                       <>
                         {/* Show Go button if enrolled and not in enrollment view */}
                         {isEnrolled(course._id) && !showEnrollments && (
@@ -311,8 +308,8 @@ export default function Dashboard() {
                       </>
                     )}
 
-                    {/* Faculty View */}
-                    {facultyView && (
+                    {/* Faculty ONLY View - NOT TA */}
+                    {isFaculty && (
                       <>
                         <Button variant="primary">Go</Button>
                         <button
