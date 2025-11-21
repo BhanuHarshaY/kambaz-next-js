@@ -1,4 +1,4 @@
-// File: src/app/(Kambaz)/Courses/[cid]/layout.tsx
+
 "use client";
 
 import { ReactNode, useState, useEffect } from "react";
