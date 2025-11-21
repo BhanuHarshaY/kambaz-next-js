@@ -1,4 +1,4 @@
-// File: src/app/(Kambaz)/Courses/[cid]/Assignments/page.tsx
+
 "use client";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
