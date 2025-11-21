@@ -2,7 +2,7 @@
 import axios from "axios";
 const HTTP_SERVER = process.env.NEXT_PUBLIC_HTTP_SERVER;
 
-// Debug: Check what HTTP_SERVER is
+
 console.log("HTTP_SERVER value:", HTTP_SERVER);
 
 export const fetchWelcomeMessage = async () => {

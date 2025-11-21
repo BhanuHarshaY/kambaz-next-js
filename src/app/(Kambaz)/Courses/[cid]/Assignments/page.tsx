@@ -1,10 +1,11 @@
-// File: src/app/(Kambaz)/Courses/[cid]/Assignments/page.tsx
 "use client";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../../../store";
-import { deleteAssignment } from "./reducer";
+import { setAssignments, deleteAssignment } from "./reducer";
+import * as client from "../../client";
+import { useEffect } from "react";
 import {
   Button,
   InputGroup,
@@ -33,9 +34,29 @@ export default function Assignments() {
   const { assignments } = useSelector((state: RootState) => state.assignmentsReducer);
   const { currentUser } = useSelector((state: RootState) => state.accountReducer);
 
-  const handleDeleteAssignment = (assignmentId: string) => {
+  // Fetch assignments from server on load
+  useEffect(() => {
+    const fetchAssignments = async () => {
+      try {
+        const assignments = await client.findAssignmentsForCourse(cid as string);
+        dispatch(setAssignments(assignments));
+      } catch (error) {
+        console.error("Error fetching assignments:", error);
+      }
+    };
+    if (cid) {
+      fetchAssignments();
+    }
+  }, [cid, dispatch]);
+
+  const handleDeleteAssignment = async (assignmentId: string) => {
     if (window.confirm("Are you sure you want to remove this assignment?")) {
-      dispatch(deleteAssignment(assignmentId));
+      try {
+        await client.deleteAssignment(assignmentId);
+        dispatch(deleteAssignment(assignmentId));
+      } catch (error) {
+        console.error("Error deleting assignment:", error);
+      }
     }
   };
 
@@ -104,42 +125,40 @@ export default function Assignments() {
           </div>
 
           <ListGroup className="rounded-0">
-            {assignments
-              .filter((assignment) => assignment.course === cid)
-              .map((assignment) => (
-                <ListGroupItem key={assignment._id} className="wd-lesson p-3 ps-1">
-                  <div className="d-flex justify-content-between align-items-start">
-                    <div className="d-flex align-items-start">
-                      <BsGripVertical className="me-2 fs-3" />
-                      <RxFileText className="me-3 fs-4 text-success" />
-                      <div>
-                        <Link
-                          href={`/Courses/${cid}/Assignments/${assignment._id}`}
-                          className="wd-assignment-link text-dark fw-bold text-decoration-none"
-                        >
-                          {assignment.title}
-                        </Link>
-                        <div className="text-muted" style={{ fontSize: "0.85rem" }}>
-                          <span className="text-danger">Multiple Modules</span> |{" "}
-                          <strong>Not available until</strong> {new Date(assignment.availableDate).toLocaleDateString()} |{" "}
-                          <strong>Due</strong> {new Date(assignment.dueDate).toLocaleDateString()} | {assignment.points} pts
-                        </div>
+            {assignments.map((assignment) => (
+              <ListGroupItem key={assignment._id} className="wd-lesson p-3 ps-1">
+                <div className="d-flex justify-content-between align-items-start">
+                  <div className="d-flex align-items-start">
+                    <BsGripVertical className="me-2 fs-3" />
+                    <RxFileText className="me-3 fs-4 text-success" />
+                    <div>
+                      <Link
+                        href={`/Courses/${cid}/Assignments/${assignment._id}`}
+                        className="wd-assignment-link text-dark fw-bold text-decoration-none"
+                      >
+                        {assignment.title}
+                      </Link>
+                      <div className="text-muted" style={{ fontSize: "0.85rem" }}>
+                        <span className="text-danger">Multiple Modules</span> |{" "}
+                        <strong>Not available until</strong> {new Date(assignment.availableDate).toLocaleDateString()} |{" "}
+                        <strong>Due</strong> {new Date(assignment.dueDate).toLocaleDateString()} | {assignment.points} pts
                       </div>
                     </div>
-                    <div className="d-flex align-items-center">
-                      <FaCheckCircle className="text-success me-2" />
-                      {canEdit && (
-                        <FaTrash 
-                          className="text-danger me-2"
-                          style={{ cursor: "pointer" }}
-                          onClick={() => handleDeleteAssignment(assignment._id)}
-                        />
-                      )}
-                      <IoEllipsisVertical className="fs-4" />
-                    </div>
                   </div>
-                </ListGroupItem>
-              ))}
+                  <div className="d-flex align-items-center">
+                    <FaCheckCircle className="text-success me-2" />
+                    {canEdit && (
+                      <FaTrash 
+                        className="text-danger me-2"
+                        style={{ cursor: "pointer" }}
+                        onClick={() => handleDeleteAssignment(assignment._id)}
+                      />
+                    )}
+                    <IoEllipsisVertical className="fs-4" />
+                  </div>
+                </div>
+              </ListGroupItem>
+            ))}
           </ListGroup>
         </ListGroupItem>
       </ListGroup>

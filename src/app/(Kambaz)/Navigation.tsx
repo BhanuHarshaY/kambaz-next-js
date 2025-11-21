@@ -1,4 +1,3 @@
-
 "use client";
 
 import Image from "next/image";
@@ -17,19 +16,12 @@ export default function KambazNavigation() {
   const { currentUser } = useSelector((state: RootState) => state.accountReducer);
 
   const links = [
-    { label: "Dashboard", path: "/Dashboard", icon: AiOutlineDashboard },
-    { label: "Courses", path: "/Dashboard", icon: LiaBookSolid }, 
-    { label: "Calendar", path: "/Calendar", icon: IoCalendarOutline },
-    { label: "Inbox", path: "/Inbox", icon: FaInbox },
-    { label: "Labs", path: "/Labs", icon: LiaCogSolid },
+    { label: "Dashboard", path: "/Dashboard", icon: AiOutlineDashboard, requiresAuth: true },
+    { label: "Courses", path: "/Dashboard", icon: LiaBookSolid, requiresAuth: true }, 
+    { label: "Calendar", path: "/Calendar", icon: IoCalendarOutline, requiresAuth: true },
+    { label: "Inbox", path: "/Inbox", icon: FaInbox, requiresAuth: true },
+    { label: "Labs", path: "/Labs", icon: LiaCogSolid, requiresAuth: false },
   ];
-
-  const handleNavClick = (e: React.MouseEvent, path: string) => {
-    // If not logged in and trying to access protected routes, prevent navigation
-    if (!currentUser && path !== "/Account") {
-      e.preventDefault();
-    }
-  };
 
   return (
     <ListGroup
@@ -48,7 +40,7 @@ export default function KambazNavigation() {
         <Image src="/images/NEU.png" alt="NEU Logo" width={70} height={70} priority />
       </ListGroupItem>
 
-      {/* Account - always accessible */}
+      {/* Account */}
       <ListGroupItem
         as={Link}
         href="/Account"
@@ -65,32 +57,33 @@ export default function KambazNavigation() {
         Account
       </ListGroupItem>
 
-      {/* Other links - show but disable if not authenticated */}
+      {/* Navigation Links */}
       {links.map((link) => {
         const isActive = pathname.includes(link.label);
         const Icon = link.icon;
+        const isDisabled = link.requiresAuth && !currentUser;
         
-        if (!currentUser) {
-          // Show disabled state when not logged in
+        
+        if (isDisabled) {
           return (
             <ListGroupItem
               key={`${link.path}-${link.label}`}
-              className="bg-black text-center border-0 text-secondary"
-              style={{ cursor: "not-allowed", opacity: 0.5 }}
+              className="bg-black text-center border-0 text-white"
+              style={{ cursor: "not-allowed" }}
             >
-              <Icon className="fs-1 text-secondary" />
+              <Icon className="fs-1 text-danger" />
               <br />
               {link.label}
             </ListGroupItem>
           );
         }
         
+        
         return (
           <ListGroupItem
             key={`${link.path}-${link.label}`}
             as={Link}
             href={link.path}
-            onClick={(e) => handleNavClick(e, link.path)}
             className={`bg-black text-center border-0 ${
               isActive ? "text-danger bg-white" : "text-white bg-black"
             }`}

@@ -8,7 +8,7 @@ export default function AccountNavigation() {
   const pathname = usePathname();
   const { currentUser } = useSelector((state: RootState) => state.accountReducer);
   
-  // Conditional links based on authentication status
+  
   const links = currentUser 
     ? [{ href: "/Account/Profile", label: "Profile" }]
     : [

@@ -1,7 +1,5 @@
-
 import { useState } from "react";
 import { useParams } from "next/navigation";
-import { useDispatch } from "react-redux";
 import ModuleEditor from "./ModuleEditor";
 import {
   Button,
@@ -13,14 +11,19 @@ import {
 import { FaPlus } from "react-icons/fa6";
 import GreenCheckmark from "./GreenCheckmark";
 import { IoBanOutline } from "react-icons/io5";
-import { addModule } from "./reducer";
 
-export default function ModulesControls() {
-  const { cid } = useParams();
-  const dispatch = useDispatch();
-  
+interface ModulesControlsProps {
+  moduleName: string;
+  setModuleName: (name: string) => void;
+  addModule: () => void;
+}
+
+export default function ModulesControls({
+  moduleName,
+  setModuleName,
+  addModule,
+}: ModulesControlsProps) {
   const [show, setShow] = useState(false);
-  const [moduleName, setModuleName] = useState("");
   
   const handleClose = () => {
     setShow(false);
@@ -31,11 +34,7 @@ export default function ModulesControls() {
   
   const handleAddModule = () => {
     if (moduleName.trim()) {
-      dispatch(addModule({
-        name: moduleName,
-        course: cid as string
-      }));
-      setModuleName("");
+      addModule(); // Call the prop function from parent
       handleClose();
     }
   };

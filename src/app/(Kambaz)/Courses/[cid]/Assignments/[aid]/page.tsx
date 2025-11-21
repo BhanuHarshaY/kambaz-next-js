@@ -1,10 +1,10 @@
-
 "use client";
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../../../../store";
-import { addAssignment, updateAssignment } from "../reducer";
+import { setAssignments } from "../reducer";
+import * as client from "../../../client";
 import {
   Button,
   Col,
@@ -15,7 +15,6 @@ import {
   Row,
   Container,
 } from "react-bootstrap";
-import { v4 as uuidv4 } from "uuid";
 
 type CurrentUser = {
   _id: string;
@@ -42,7 +41,7 @@ export default function AssignmentEditor() {
   const isNew = aid === "new";
   const existingAssignment = assignments.find((a) => a._id === aid);
   
-  // Check if user can edit (Faculty or TA)
+ 
   const canEdit = (currentUser as CurrentUser)?.role === "FACULTY" || 
                   (currentUser as CurrentUser)?.role === "TA";
   
@@ -55,6 +54,22 @@ export default function AssignmentEditor() {
     untilDate: "",
   });
 
+ 
+  useEffect(() => {
+    const fetchAssignments = async () => {
+      if (assignments.length === 0 && cid) {
+        try {
+          const fetchedAssignments = await client.findAssignmentsForCourse(cid as string);
+          dispatch(setAssignments(fetchedAssignments));
+        } catch (error) {
+          console.error("Error fetching assignments:", error);
+        }
+      }
+    };
+    fetchAssignments();
+  }, [assignments.length, cid, dispatch]);
+
+  
   useEffect(() => {
     if (existingAssignment && !isNew) {
       setAssignmentForm({
@@ -68,38 +83,57 @@ export default function AssignmentEditor() {
     }
   }, [existingAssignment, isNew]);
 
-  // Redirect if not faculty/TA and trying to create new
   useEffect(() => {
     if (isNew && !canEdit) {
       router.push(`/Courses/${cid}/Assignments`);
     }
   }, [isNew, canEdit, cid, router]);
 
-  const handleSave = () => {
-    if (isNew) {
-      const newAssignment = {
-        _id: uuidv4(),
-        course: cid as string,
-        ...assignmentForm,
-      };
-      dispatch(addAssignment(newAssignment));
-    } else {
-      const updatedAssignment = {
-        _id: aid as string,
-        course: cid as string,
-        ...assignmentForm,
-      };
-      dispatch(updateAssignment(updatedAssignment));
+  const handleSave = async () => {
+    try {
+      if (isNew) {
+        const newAssignment = await client.createAssignmentForCourse(cid as string, {
+          ...assignmentForm,
+          course: cid as string,
+        });
+        const updatedAssignments = [...assignments, newAssignment];
+        dispatch(setAssignments(updatedAssignments));
+      } else {
+        const updatedAssignment = await client.updateAssignment({
+          _id: aid as string,
+          course: cid as string,
+          ...assignmentForm,
+        });
+        const updatedAssignments = assignments.map((a) =>
+          a._id === aid ? updatedAssignment : a
+        );
+        dispatch(setAssignments(updatedAssignments));
+      }
+      router.push(`/Courses/${cid}/Assignments`);
+    } catch (error) {
+      console.error("Error saving assignment:", error);
     }
-    router.push(`/Courses/${cid}/Assignments`);
   };
 
   const handleCancel = () => {
     router.push(`/Courses/${cid}/Assignments`);
   };
 
-  if (!isNew && !existingAssignment) {
-    return <Container><p>Assignment not found</p></Container>;
+  
+  if (!isNew && assignments.length === 0) {
+    return <Container><p>Loading assignment...</p></Container>;
+  }
+
+ 
+  if (!isNew && assignments.length > 0 && !existingAssignment) {
+    return (
+      <Container>
+        <p>Assignment not found</p>
+        <Button onClick={() => router.push(`/Courses/${cid}/Assignments`)}>
+          Back to Assignments
+        </Button>
+      </Container>
+    );
   }
 
   return (

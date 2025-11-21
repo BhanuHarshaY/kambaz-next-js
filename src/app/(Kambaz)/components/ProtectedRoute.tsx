@@ -23,7 +23,6 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
     return () => clearTimeout(timer);
   }, [currentUser, router]);
 
-  // Show loading state briefly while checking auth
   if (isChecking) {
     return (
       <div className="d-flex justify-content-center align-items-center" style={{ height: "50vh" }}>
@@ -34,7 +33,7 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
     );
   }
 
-  // Don't render children if not authenticated
+  
   if (!currentUser) {
     return null;
   }

@@ -18,13 +18,16 @@ interface CoursesState {
 }
 
 const initialState: CoursesState = {
-  courses: courses as Course[],
+  courses: [], 
 };
 
 const coursesSlice = createSlice({
   name: "courses",
   initialState,
   reducers: {
+    setCourses: (state, action: PayloadAction<Course[]>) => {
+      state.courses = action.payload;
+    },
     addNewCourse: (state, action: PayloadAction<Course>) => {
       const newCourse = { ...action.payload, _id: uuidv4() };
       state.courses = [...state.courses, newCourse];
@@ -39,12 +42,9 @@ const coursesSlice = createSlice({
         c._id === action.payload._id ? action.payload : c
       );
     },
-    setCourses: (state, action: PayloadAction<Course[]>) => {
-      state.courses = action.payload;
-    },
   },
 });
 
-export const { addNewCourse, deleteCourse, updateCourse, setCourses } =
+export const { setCourses, addNewCourse, deleteCourse, updateCourse } =
   coursesSlice.actions;
 export default coursesSlice.reducer;
