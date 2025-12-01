@@ -8,7 +8,6 @@ export default function AccountNavigation() {
   const pathname = usePathname();
   const { currentUser } = useSelector((state: RootState) => state.accountReducer);
   
-  
   const links = currentUser 
     ? [{ href: "/Account/Profile", label: "Profile" }]
     : [
@@ -34,6 +33,20 @@ export default function AccountNavigation() {
           </Link>
         );
       })}
+      
+      
+      {currentUser && currentUser.role === "ADMIN" && (
+        <Link
+          href="/Account/Users"
+          className={`list-group-item list-group-item-action border-0 text-center rounded-0 ${
+            pathname.endsWith('Users')
+              ? "text-black border-start border-3 border-black"
+              : "text-danger"
+          }`}
+        >
+          <span className="d-block">Users</span>
+        </Link>
+      )}
     </div>
   );
 }

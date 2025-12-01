@@ -1,14 +1,29 @@
-"use client";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+"use client"
 import { Container, Table } from "react-bootstrap";
 import { FaUserCircle } from "react-icons/fa";
-import * as db from "../../../../Database";
-import { useParams } from "next/navigation";
+import PeopleDetails from "../Details";
+import { useState } from "react";
 
-export default function PeopleTable() {
-  const { cid } = useParams();
-  const { users, enrollments } = db;
+export default function PeopleTable({ users = [], fetchUsers }: { users?: any[]; fetchUsers: () => void; }) {
+  const [showDetails, setShowDetails] = useState(false);
+  const [showUserId, setShowUserId] = useState<string | null>(null);
+  
+  const handleClose = () => {
+    setShowDetails(false);
+    setShowUserId(null);
+    fetchUsers(); // This should refresh the user list
+  };
+  
   return (
     <Container id="wd-people-table">
+      {showDetails && (
+        <PeopleDetails
+          uid={showUserId}
+          onClose={handleClose}
+        />
+      )}
+
       <Table striped>
         <thead>
           <tr>
@@ -21,27 +36,29 @@ export default function PeopleTable() {
           </tr>
         </thead>
         <tbody>
-          {users
-            .filter((usr) =>
-              enrollments.some(
-                (enrollment) =>
-                  enrollment.user === usr._id && enrollment.course === cid
-              )
-            )
-            .map((user) => (
-              <tr key={user._id}>
-                <td className="wd-full-name text-nowrap">
+          {users.map((user: any) => (
+            <tr key={user._id}>
+              <td className="wd-full-name text-nowrap">
+                <span 
+                  className="text-decoration-none"
+                  style={{ cursor: "pointer" }}
+                  onClick={() => {
+                    setShowDetails(true);
+                    setShowUserId(user._id);
+                  }}
+                >
                   <FaUserCircle className="me-2 fs-1 text-secondary" />
                   <span className="wd-first-name">{user.firstName}{' '}</span>
                   <span className="wd-last-name">{user.lastName}</span>
-                </td>
-                <td className="wd-login-id">{user.loginId}</td>
-                <td className="wd-section">{user.section}</td>
-                <td className="wd-role">{user.role}</td>
-                <td className="wd-last-activity">{user.lastActivity}</td>
-                <td className="wd-total-activity">{user.totalActivity}</td>
-              </tr>
-            ))}
+                </span>
+              </td>
+              <td className="wd-login-id">{user.loginId}</td>
+              <td className="wd-section">{user.section}</td>
+              <td className="wd-role">{user.role}</td>
+              <td className="wd-last-activity">{user.lastActivity}</td>
+              <td className="wd-total-activity">{user.totalActivity}</td>
+            </tr>
+          ))}
         </tbody>
       </Table>
     </Container>
