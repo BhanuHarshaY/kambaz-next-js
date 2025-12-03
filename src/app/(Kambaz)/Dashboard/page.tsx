@@ -42,6 +42,7 @@ export default function Dashboard() {
   }
 
   const isFaculty = currentUser.role === "FACULTY";
+  const isAdmin = currentUser.role === "ADMIN";
   const isStudent = currentUser.role === "STUDENT";
   const isTA = currentUser.role === "TA";
   const [showEnrollments, setShowEnrollments] = useState(false);
@@ -49,13 +50,15 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchCourses = async () => {
       try {
+        let coursesData;
         if (showEnrollments) {
-          const allCourses = await courseClient.fetchAllCourses();
-          dispatch(setCourses(allCourses));
+          coursesData = await courseClient.fetchAllCourses();
         } else {
-          const enrolledCourses = await courseClient.findMyCourses();
-          dispatch(setCourses(enrolledCourses));
+          coursesData = await courseClient.findMyCourses();
         }
+        console.log("API returned courses:", JSON.stringify(coursesData, null, 2));
+        console.log("Course IDs:", coursesData.map((c: any) => c._id));
+        dispatch(setCourses(coursesData));
       } catch (error) {
         console.error("Error fetching courses:", error);
       }
@@ -76,15 +79,16 @@ export default function Dashboard() {
       fetchCourses();
       fetchEnrollments();
     }
-  }, [currentUser, dispatch, showEnrollments]);
+  }, [currentUser._id, dispatch, showEnrollments]);
 
   const onAddCourse = async () => {
     try {
-      const newCourse = await courseClient.createCourse({
+      await courseClient.createCourse({
         ...course,
         image: "/images/reactjs.jpg",
       });
-      dispatch(setCourses([...courses, newCourse]));
+      const updatedCourses = await courseClient.findMyCourses();
+      dispatch(setCourses(updatedCourses));
       setCourse({
         _id: "0",
         name: "New Course",
@@ -133,17 +137,17 @@ export default function Dashboard() {
     }
   };
 
-  const onUnenroll = async (enrollmentId: string) => {
-    try {
-      await courseClient.unenrollFromCourse(enrollmentId);
-      const updatedEnrollments = await courseClient.findEnrollmentsForUser(
-        currentUser._id
-      );
-      dispatch(setEnrollments(updatedEnrollments));
-    } catch (error) {
-      console.error("Error unenrolling:", error);
-    }
-  };
+  const onUnenroll = async (courseId: string) => {
+  try {
+    await courseClient.unenrollFromTheCourse(currentUser._id, courseId);
+    const updatedEnrollments = await courseClient.findEnrollmentsForUser(
+      currentUser._id
+    );
+    dispatch(setEnrollments(updatedEnrollments));
+  } catch (error) {
+    console.error("Error unenrolling:", error);
+  }
+};
 
   const isEnrolled = (courseId: string) => {
     return enrollments.some(
@@ -167,14 +171,15 @@ export default function Dashboard() {
     if (courseImage) return courseImage;
     return courseImages[courseId] || "/images/reactjs.jpg";
   };
+  
 
   return (
     <Container id="wd-dashboard">
       <h1 id="wd-dashboard-title">Dashboard</h1>
       <hr />
       
-      {/* Only FACULTY can add/update courses - NOT TA */}
-      {isFaculty && (
+      {/* FACULTY and ADMIN can add/update courses - NOT TA */}
+      {(isFaculty || isAdmin) && (
         <>
           <h5>
             New Course
@@ -280,14 +285,9 @@ export default function Dashboard() {
                                 variant="danger"
                                 onClick={(e) => {
                                   e.preventDefault();
-                                  const enrollment = enrollments.find(
-                                    (enr: any) =>
-                                      enr.user === currentUser._id &&
-                                      enr.course === course._id
-                                  );
-                                  if (enrollment) {
-                                    onUnenroll(enrollment._id);
-                                  }
+                                  onUnenroll(course._id);
+                                    
+                                  
                                 }}
                               >
                                 Unenroll
@@ -308,8 +308,8 @@ export default function Dashboard() {
                       </>
                     )}
 
-                    {/* Faculty ONLY View - NOT TA */}
-                    {isFaculty && (
+                    {/* Faculty and ADMIN View - NOT TA */}
+                    {(isFaculty || isAdmin) && (
                       <>
                         <Button variant="primary">Go</Button>
                         <button

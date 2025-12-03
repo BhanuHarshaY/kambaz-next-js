@@ -19,41 +19,33 @@ import {
   deleteModule,
 } from "./reducer";
 import { useSelector, useDispatch } from "react-redux";
-
 export default function Modules() {
   const { cid } = useParams();
   const [moduleName, setModuleName] = useState("");
   const { modules } = useSelector((state: any) => state.modulesReducer);
   const { currentUser } = useSelector((state: any) => state.accountReducer);
-  
-  const isFaculty = currentUser?.role === "FACULTY";
-  const isStudent = currentUser?.role === "STUDENT";
-  
+  const studentView = currentUser.role === "STUDENT";
   const dispatch = useDispatch();
-  
   const fetchModules = async () => {
     const modules = await client.findModulesForCourse(cid as string);
     dispatch(setModules(modules));
   };
-  
   useEffect(() => {
     fetchModules();
   }, []);
-  
   const onCreateModuleForCourse = async () => {
     if (!cid) return;
     const newModule = { name: moduleName, course: cid };
-    const createdModule = await client.createModuleForCourse(cid as string, newModule);
-    dispatch(setModules([...modules, createdModule]));
+    // eslint-disable-next-line @next/next/no-assign-module-variable
+    const module = await client.createModuleForCourse(cid as string, newModule);
+    dispatch(setModules([...modules, module]));
   };
-  
   const onRemoveModule = async (moduleId: string) => {
-    await client.deleteModule(moduleId);
+    await client.deleteModule(cid as string, moduleId);
     dispatch(setModules(modules.filter((m: any) => m._id !== moduleId)));
   };
-  
   const onUpdateModule = async (module: any) => {
-    await client.updateModule(module);
+    await client.updateModule(cid as string, module);
     const newModules = modules.map((m: any) =>
       m._id === module._id ? module : m
     );
@@ -62,8 +54,7 @@ export default function Modules() {
 
   return (
     <Container>
-      {/* Only FACULTY can add modules - NOT TA or Student */}
-      {isFaculty && (
+      {!studentView && (
         <>
           <ModulesControls
             moduleName={moduleName}
@@ -76,7 +67,6 @@ export default function Modules() {
           <br />
         </>
       )}
-      
       <ListGroup className="rounded-0" id="wd-modules">
         {modules.map((module: any) => (
           <ListGroup.Item
@@ -100,8 +90,7 @@ export default function Modules() {
                   defaultValue={module.name}
                 />
               )}
-              {/* Only FACULTY can edit/delete modules - NOT TA */}
-              {isFaculty && (
+              {!studentView && (
                 <ModuleControlButtons
                   moduleId={module._id}
                   deleteModule={(moduleId) => onRemoveModule(moduleId)}
