@@ -1,43 +1,29 @@
-
 "use client";
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ReactNode, useState, useEffect } from "react";
 import CourseNavigation from "./Navigation";
 import { FaAlignJustify } from "react-icons/fa";
 import { useSelector } from "react-redux";
 import { useParams, useRouter } from "next/navigation";
-import { RootState } from "../../store";
-
-interface Enrollment {
-  _id: string;
-  user: string;
-  course: string;
-}
-
-type CurrentUser = {
-  _id: string;
-  role: string;
-} | null;
 
 export default function CoursesLayout({ children }: { children: ReactNode }) {
   const { cid } = useParams();
   const router = useRouter();
 
-  const { courses } = useSelector((state: RootState) => state.coursesReducer);
-  const { currentUser } = useSelector((state: RootState) => state.accountReducer);
-  const { enrollments } = useSelector((state: RootState) => state.enrollmentsReducer);
+  const { courses } = useSelector((state: any) => state.coursesReducer);
+  const { currentUser } = useSelector((state: any) => state.accountReducer);
+  const { enrollments } = useSelector((state: any) => state.enrollmentsReducer);
   
-  const course = courses.find((c) => c._id === cid);
+  const course = courses.find((c: any) => c._id === cid);
   const [showNavigation, setShowNavigation] = useState(true);
 
-  // Check if user is enrolled
   useEffect(() => {
     if (!currentUser) return;
     
-    const userId = currentUser!._id;
+    const userId = currentUser._id;
 
     const isEnrolled = enrollments.some(
-      (enrollment: Enrollment) =>
+      (enrollment: any) =>
         enrollment.user === userId &&
         enrollment.course === cid
     );
