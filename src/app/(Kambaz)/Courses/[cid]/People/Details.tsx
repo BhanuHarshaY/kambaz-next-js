@@ -1,147 +1,205 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-"use client";
 import { useEffect, useState } from "react";
+import { FaCheck, FaUserCircle } from "react-icons/fa";
 import { IoCloseSharp } from "react-icons/io5";
 import * as client from "../../../Account/client";
 import { FaPencil } from "react-icons/fa6";
-import { FaCheck, FaUserCircle } from "react-icons/fa";
 import { FormControl } from "react-bootstrap";
 
-export default function PeopleDetails({ 
-  uid, 
-  onClose 
-}: { 
-  uid: string | null; 
-  onClose: () => void; 
+export default function PeopleDetails({
+  uid,
+  onClose,
+}: {
+  uid: string | null;
+  onClose: () => void;
 }) {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<any>({});
   const [name, setName] = useState("");
   const [editing, setEditing] = useState(false);
-  
+  const [email, setEmail] = useState("");
+  const [editingEmail, setEditingEmail] = useState(false);
+  const [role, setRole] = useState("");
+  const [editingRole, setEditingRole] = useState(false);
+
   const fetchUser = async () => {
     if (!uid) return;
-    try {
-      const fetchedUser = await client.findUserById(uid);
-      console.log("Fetched user:", fetchedUser);
-      setUser(fetchedUser);
-      setName(`${fetchedUser.firstName} ${fetchedUser.lastName}`);
-    } catch (error) {
-      console.error("Error fetching user:", error);
-    }
+    const user = await client.findUserById(uid);
+    setUser(user);
   };
 
+  useEffect(() => {
+    if (uid) fetchUser();
+  }, [uid]);
+  if (!uid) return null;
+
   const deleteUser = async (uid: string) => {
-    try {
-      console.log("Attempting to delete user with ID:", uid);
-      const result = await client.deleteUser(uid);
-      console.log("Delete result:", result);
-      onClose();
-    } catch (error) {
-      console.error("Error deleting user:", error);
-    }
+    await client.deleteUser(uid);
+    onClose();
   };
 
   const saveUser = async () => {
     const [firstName, lastName] = name.split(" ");
-    const updatedUser = { ...user, firstName, lastName };
+    const updatedUser = { ...user, firstName, lastName: lastName ? lastName : "" };
     await client.updateUser(updatedUser);
     setUser(updatedUser);
     setEditing(false);
     onClose();
   };
-  
-  useEffect(() => {
-    if (uid) {
-      fetchUser();
-    }
-  }, [uid]);
-  
-  if (!uid || !user) return null;
-  
+
+  const saveRole = async () => {
+    const updatedUser = { ...user, role };
+    await client.updateUser(updatedUser);
+    setUser(updatedUser);
+    setEditingRole(false);
+    onClose();
+  };
+
+  const saveEmail = async () => {
+    const updatedUser = { ...user, email };
+    await client.updateUser(updatedUser);
+    setUser(updatedUser);
+    setEditingEmail(false);
+    onClose();
+  };
+
   return (
     <div className="wd-people-details position-fixed top-0 end-0 bottom-0 bg-white p-4 shadow w-25">
-      {/* Close button - top right */}
-      <button 
-        onClick={onClose} 
+      {/* Close button on PeopleDetails */}
+      <button
+        onClick={onClose}
         className="btn position-fixed end-0 top-0 wd-close-details"
       >
         <IoCloseSharp className="fs-1" />
       </button>
-      
-      {/* User icon */}
+      {/* User pic inside the PeopleDetails */}
       <div className="text-center mt-2">
         <FaUserCircle className="text-secondary me-2 fs-1" />
       </div>
       <hr />
-      
-      {/* Editable name section */}
-      <div className="d-flex align-items-center justify-content-between mb-3">
+      {/* User name and edit controls inside the PeopleDetails */}
+      <div className="text-danger fs-4 wd-name">
         {!editing && (
-          <div 
-            className="text-danger fs-4 wd-name flex-grow-1"
+          <FaPencil
             onClick={() => setEditing(true)}
-            style={{ cursor: "pointer" }}
-          >
+            className="float-end fs-5 mt-2 wd-edit"
+          />
+        )}
+        {editing && (
+          <FaCheck
+            onClick={() => saveUser()}
+            className="float-end fs-5 mt-2 me-2 wd-save"
+          />
+        )}
+        {!editing && (
+          <div className="wd-name" onClick={() => setEditing(true)}>
             {user.firstName} {user.lastName}
           </div>
         )}
-        
-        {editing && (
-          <FormControl 
-            className="wd-edit-name flex-grow-1"
-            value={name}
+        {user && editing && (
+          <FormControl
+            className="w-50 wd-edit-name"
+            defaultValue={`${user.firstName} ${user.lastName}`}
             onChange={(e) => setName(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter") { 
-                saveUser(); 
+              if (e.key === "Enter") {
+                saveUser();
               }
             }}
           />
         )}
-        
-        {/* Edit/Save icon */}
-        {!editing && (
-          <FaPencil 
-            onClick={() => setEditing(true)}
-            className="fs-5 ms-2 wd-edit text-primary" 
-            style={{ cursor: "pointer" }}
+      </div>
+      <br />
+      {/* User roles, login ID, and section inside the PeopleDetails */}
+      <div className="mb-2">
+        <b>Roles:</b>
+        {!editingRole && (
+          <FaPencil
+            onClick={() => setEditingRole(true)}
+            className="float-end fs-5 wd-edit-role"
           />
         )}
-        {editing && (
-          <FaCheck 
-            onClick={saveUser}
-            className="fs-5 ms-2 wd-save text-success" 
-            style={{ cursor: "pointer" }}
+        {editingRole && (
+          <FaCheck
+            onClick={() => saveRole()}
+            className="float-end fs-5 me-2 wd-save-role"
+          />
+        )}
+        {!editingRole && (
+          <span className="wd-roles" onClick={() => setEditingRole(true)}>
+            {" "}
+            {user.role}{" "}
+          </span>
+        )}
+        {editingRole && (
+          <select
+            value={role || user.role}
+            onChange={(e) => setRole(e.target.value)}
+            className="form-select wd-edit-role-select"
+            
+          >
+            <option value="STUDENT">STUDENT</option>
+            <option value="TA">TA</option>
+            <option value="FACULTY">FACULTY</option>
+            <option value="ADMIN">ADMIN</option>
+          </select>
+        )}
+      </div>
+      <br />
+      <div className="mb-2">
+        <b>Email:</b>{" "}
+        {!editingEmail && (
+          <FaPencil
+            onClick={() => setEditingEmail(true)}
+            className="float-end fs-5 wd-edit-email"
+          />
+        )}
+        {editingEmail && (
+          <FaCheck
+            onClick={() => saveEmail()}
+            className="float-end fs-5 me-2 wd-save-email"
+          />
+        )}
+        {!editingEmail && (
+          <span className="wd-email" onClick={() => setEditingEmail(true)}>
+            {user.email}
+          </span>
+        )}
+        {editingEmail && (
+          <FormControl
+            type="email"
+            className="wd-edit-email-input"
+            defaultValue={user.email}
+            onChange={(e) => setEmail(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                saveEmail();
+              }
+            }}
           />
         )}
       </div>
-      
-      {/* User details */}
-      <b>Roles:</b>{" "}
-      <span className="wd-roles">{user.role}</span>
       <br />
-      
-      <b>Login ID:</b>{" "}
-      <span className="wd-login-id">{user.loginId}</span>
+      {/* User login ID, section, and total activity inside the PeopleDetails */}
+      <b>Login ID:</b> <span className="wd-login-id"> {user.loginId} </span>
       <br />
-      
-      <b>Section:</b>{" "}
-      <span className="wd-section">{user.section}</span>
       <br />
-      
-      <b>Total Activity:</b>{" "}
+      {/* User section and total activity inside the PeopleDetails */}
+      <b>Section:</b> <span className="wd-section"> {user.section} </span>
+      <br />
+      <br />
+      {/* User total activity inside the PeopleDetails */}
+      <b>Total Activity:</b>
       <span className="wd-total-activity">{user.totalActivity}</span>
-
       <hr />
-      
-      {/* Action buttons */}
-      <button 
-        onClick={() => deleteUser(uid)} 
+      {/* Delete button on PeopleDetails */}
+      <button
+        onClick={() => deleteUser(uid)}
         className="btn btn-danger float-end wd-delete"
       >
         Delete
       </button>
-      <button 
+      {/* Cancel button on PeopleDetails */}
+      <button
         onClick={onClose}
         className="btn btn-secondary float-end me-2 wd-cancel"
       >
