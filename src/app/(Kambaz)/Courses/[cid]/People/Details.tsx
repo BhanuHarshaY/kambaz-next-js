@@ -121,7 +121,8 @@ export default function PeopleDetails({
         {editingRole && (
           <FaCheck
             onClick={() => saveRole()}
-            className="float-end fs-5 me-2 wd-save-role"
+            className="float-end fs-5 me-2 wd-save-role text-success"
+            style={{ cursor: "pointer" }}
           />
         )}
         {!editingRole && (

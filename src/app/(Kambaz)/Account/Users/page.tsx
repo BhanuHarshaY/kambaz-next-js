@@ -93,7 +93,7 @@ export default function Users() {
         >
           <option value="">All Roles</option>
           <option value="STUDENT">Students</option>
-          <option value="TA">Assistants</option>
+          <option value="TA">Teaching Assistants</option>
           <option value="FACULTY">Faculty</option>
           <option value="ADMIN">Administrators</option>
         </select>

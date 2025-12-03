@@ -19,20 +19,26 @@ import {
   deleteModule,
 } from "./reducer";
 import { useSelector, useDispatch } from "react-redux";
+
 export default function Modules() {
   const { cid } = useParams();
   const [moduleName, setModuleName] = useState("");
   const { modules } = useSelector((state: any) => state.modulesReducer);
   const { currentUser } = useSelector((state: any) => state.accountReducer);
-  const studentView = currentUser.role === "STUDENT";
+  
+  const canEditModules = currentUser?.role === "FACULTY" || currentUser?.role === "ADMIN";
+  
   const dispatch = useDispatch();
+  
   const fetchModules = async () => {
     const modules = await client.findModulesForCourse(cid as string);
     dispatch(setModules(modules));
   };
+  
   useEffect(() => {
     fetchModules();
   }, []);
+  
   const onCreateModuleForCourse = async () => {
     if (!cid) return;
     const newModule = { name: moduleName, course: cid };
@@ -40,10 +46,12 @@ export default function Modules() {
     const module = await client.createModuleForCourse(cid as string, newModule);
     dispatch(setModules([...modules, module]));
   };
+  
   const onRemoveModule = async (moduleId: string) => {
     await client.deleteModule(cid as string, moduleId);
     dispatch(setModules(modules.filter((m: any) => m._id !== moduleId)));
   };
+  
   const onUpdateModule = async (module: any) => {
     await client.updateModule(cid as string, module);
     const newModules = modules.map((m: any) =>
@@ -54,7 +62,7 @@ export default function Modules() {
 
   return (
     <Container>
-      {!studentView && (
+      {canEditModules && (
         <>
           <ModulesControls
             moduleName={moduleName}
@@ -90,7 +98,7 @@ export default function Modules() {
                   defaultValue={module.name}
                 />
               )}
-              {!studentView && (
+              {canEditModules && (
                 <ModuleControlButtons
                   moduleId={module._id}
                   deleteModule={(moduleId) => onRemoveModule(moduleId)}
