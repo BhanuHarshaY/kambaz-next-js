@@ -4,7 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../../../../../../store";
 import { setCurrentQuiz, setQuizzes } from "../../../reducer";
-import { Quiz, Question, Choice, BlankAnswer } from "../../../reducer";
+import { Quiz, Question, Choice, BlankAnswer, QuestionGroup } from "../../../reducer";
 import * as client from "../../../../../client";
 import {
   Container,
@@ -16,8 +16,10 @@ import {
   Row,
   Col,
 } from "react-bootstrap";
-import { FaTrash, FaPlus } from "react-icons/fa";
+import { FaTrash, FaPlus, FaSearch } from "react-icons/fa";
 import { v4 as uuidv4 } from "uuid";
+import QuestionGroupEditor from "./QuestionGroupEditor";
+import FindQuestionsModal from "./FindQuestionsModal";
 
 // Question Editor Component
 function QuestionEditor({
@@ -60,13 +62,13 @@ function QuestionEditor({
     });
   };
 
-  // Set correct choice (single selection)
-  const setCorrectChoice = (choiceId: string) => {
+  // Toggle correct choice (multiple selection allowed)
+  const toggleCorrectChoice = (choiceId: string) => {
     setEditedQuestion({
       ...editedQuestion,
       choices: editedQuestion.choices.map((c) => ({
         ...c,
-        isCorrect: c._id === choiceId,
+        isCorrect: c._id === choiceId ? !c.isCorrect : c.isCorrect,
       })),
     });
   };
@@ -140,7 +142,7 @@ function QuestionEditor({
         {/* Instructions based on question type */}
         <p className="text-muted small">
           {editedQuestion.type === "MULTIPLE_CHOICE" &&
-            "Enter your question and multiple answers, then select the one correct answer."}
+            "Enter your question and multiple answers, then check all correct answers."}
           {editedQuestion.type === "TRUE_FALSE" &&
             "Enter your question text, then select if True or False is the correct answer."}
           {editedQuestion.type === "FILL_IN_BLANK" &&
@@ -167,10 +169,9 @@ function QuestionEditor({
               <Row key={choice._id} className="mb-2 align-items-center">
                 <Col sm="auto">
                   <Form.Check
-                    type="radio"
-                    name={`correct-${editedQuestion._id}`}
+                    type="checkbox"
                     checked={choice.isCorrect}
-                    onChange={() => setCorrectChoice(choice._id)}
+                    onChange={() => toggleCorrectChoice(choice._id)}
                     label={choice.isCorrect ? "Correct Answer" : "Possible Answer"}
                     className={choice.isCorrect ? "text-success" : ""}
                   />
@@ -313,6 +314,44 @@ function QuestionPreview({
   );
 }
 
+// Question Group Preview Component
+function QuestionGroupPreview({
+  group,
+  onEdit,
+}: {
+  group: QuestionGroup;
+  onEdit: () => void;
+}) {
+  const totalPoints = (group.pickCount || group.questions.length) * group.pointsPerQuestion;
+
+  return (
+    <Card className="mb-3 border-primary">
+      <Card.Header className="bg-light d-flex justify-content-between align-items-center">
+        <span>
+          <strong>{group.name}</strong>
+          <span className="ms-2 text-muted">
+            ({group.questions.length} question{group.questions.length !== 1 ? "s" : ""})
+          </span>
+        </span>
+        <div>
+          <span className="me-3">{totalPoints} pts</span>
+          <Button variant="outline-primary" size="sm" onClick={onEdit}>
+            Edit Group
+          </Button>
+        </div>
+      </Card.Header>
+      <Card.Body className="py-2">
+        <small className="text-muted">
+          {group.pickCount
+            ? `Pick ${group.pickCount} random question${group.pickCount !== 1 ? "s" : ""} at ${group.pointsPerQuestion} pts each`
+            : `All ${group.questions.length} question${group.questions.length !== 1 ? "s" : ""} at ${group.pointsPerQuestion} pts each`
+          }
+        </small>
+      </Card.Body>
+    </Card>
+  );
+}
+
 // Main Questions Editor Page
 export default function QuizQuestionsEditor() {
   const { cid, qid } = useParams();
@@ -326,8 +365,10 @@ export default function QuizQuestionsEditor() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
+  const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
+  const [showFindQuestions, setShowFindQuestions] = useState(false);
 
-  const isFaculty = currentUser?.role === "FACULTY"|| currentUser?.role === "TA";
+  const isFaculty = currentUser?.role === "FACULTY" || currentUser?.role === "TA";
 
   // Fetch quiz on load
   useEffect(() => {
@@ -357,7 +398,7 @@ export default function QuizQuestionsEditor() {
   // Add new question
   const handleAddQuestion = async () => {
     if (!currentQuiz) return;
-    
+
     const newQuestion: Omit<Question, "_id"> = {
       title: "New Question",
       type: "MULTIPLE_CHOICE",
@@ -374,11 +415,11 @@ export default function QuizQuestionsEditor() {
     try {
       const updatedQuiz = await client.addQuestion(currentQuiz._id, newQuestion);
       dispatch(setCurrentQuiz(updatedQuiz));
-      
+
       // Set the new question to edit mode
       const newQ = updatedQuiz.questions[updatedQuiz.questions.length - 1];
       setEditingQuestionId(newQ._id);
-      
+
       // Update quizzes list
       const updatedQuizzes = quizzes.map((q) =>
         q._id === currentQuiz._id ? updatedQuiz : q
@@ -390,6 +431,45 @@ export default function QuizQuestionsEditor() {
     }
   };
 
+  // Add question from Find Questions modal
+  const handleAddFoundQuestion = async (question: Omit<Question, "_id">) => {
+    if (!currentQuiz) return;
+
+    try {
+      const updatedQuiz = await client.addQuestion(currentQuiz._id, question);
+      dispatch(setCurrentQuiz(updatedQuiz));
+
+      const updatedQuizzes = quizzes.map((q) =>
+        q._id === currentQuiz._id ? updatedQuiz : q
+      );
+      dispatch(setQuizzes(updatedQuizzes));
+    } catch (err) {
+      console.error("Error adding question:", err);
+      setError("Failed to add question");
+    }
+  };
+
+  // Add multiple questions from Find Questions modal
+  const handleAddMultipleFoundQuestions = async (questions: Omit<Question, "_id">[]) => {
+    if (!currentQuiz) return;
+
+    try {
+      let updatedQuiz = currentQuiz;
+      for (const question of questions) {
+        updatedQuiz = await client.addQuestion(updatedQuiz._id, question);
+      }
+      dispatch(setCurrentQuiz(updatedQuiz));
+
+      const updatedQuizzes = quizzes.map((q) =>
+        q._id === currentQuiz._id ? updatedQuiz : q
+      );
+      dispatch(setQuizzes(updatedQuizzes));
+    } catch (err) {
+      console.error("Error adding questions:", err);
+      setError("Failed to add questions");
+    }
+  };
+
   // Save question
   const handleSaveQuestion = async (question: Question) => {
     if (!currentQuiz) return;
@@ -398,13 +478,13 @@ export default function QuizQuestionsEditor() {
     try {
       const updatedQuiz = await client.updateQuestion(currentQuiz._id, question._id, question);
       dispatch(setCurrentQuiz(updatedQuiz));
-      
+
       // Update quizzes list
       const updatedQuizzes = quizzes.map((q) =>
         q._id === currentQuiz._id ? updatedQuiz : q
       );
       dispatch(setQuizzes(updatedQuizzes));
-      
+
       setEditingQuestionId(null);
     } catch (err) {
       console.error("Error saving question:", err);
@@ -422,17 +502,93 @@ export default function QuizQuestionsEditor() {
     try {
       const updatedQuiz = await client.deleteQuestion(currentQuiz._id, questionId);
       dispatch(setCurrentQuiz(updatedQuiz));
-      
+
       // Update quizzes list
       const updatedQuizzes = quizzes.map((q) =>
         q._id === currentQuiz._id ? updatedQuiz : q
       );
       dispatch(setQuizzes(updatedQuizzes));
-      
+
       setEditingQuestionId(null);
     } catch (err) {
       console.error("Error deleting question:", err);
       setError("Failed to delete question");
+    }
+  };
+
+  // ========== QUESTION GROUP HANDLERS ==========
+
+  // Add new question group
+  const handleAddQuestionGroup = async () => {
+    if (!currentQuiz) return;
+
+    const newGroup: Omit<QuestionGroup, "_id"> = {
+      name: "New Question Group",
+      pickCount: null,
+      pointsPerQuestion: 1,
+      questions: [],
+    };
+
+    try {
+      const updatedQuiz = await client.addQuestionGroup(currentQuiz._id, newGroup);
+      dispatch(setCurrentQuiz(updatedQuiz));
+
+      // Set the new group to edit mode
+      const newG = updatedQuiz.questionGroups[updatedQuiz.questionGroups.length - 1];
+      setEditingGroupId(newG._id);
+
+      // Update quizzes list
+      const updatedQuizzes = quizzes.map((q) =>
+        q._id === currentQuiz._id ? updatedQuiz : q
+      );
+      dispatch(setQuizzes(updatedQuizzes));
+    } catch (err) {
+      console.error("Error adding question group:", err);
+      setError("Failed to add question group");
+    }
+  };
+
+  // Save question group
+  const handleSaveQuestionGroup = async (group: QuestionGroup) => {
+    if (!currentQuiz) return;
+    setSaving(true);
+
+    try {
+      const updatedQuiz = await client.updateQuestionGroup(currentQuiz._id, group._id, group);
+      dispatch(setCurrentQuiz(updatedQuiz));
+
+      const updatedQuizzes = quizzes.map((q) =>
+        q._id === currentQuiz._id ? updatedQuiz : q
+      );
+      dispatch(setQuizzes(updatedQuizzes));
+
+      setEditingGroupId(null);
+    } catch (err) {
+      console.error("Error saving question group:", err);
+      setError("Failed to save question group");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Delete question group
+  const handleDeleteQuestionGroup = async (groupId: string) => {
+    if (!currentQuiz) return;
+    if (!window.confirm("Are you sure you want to delete this question group and all its questions?")) return;
+
+    try {
+      const updatedQuiz = await client.deleteQuestionGroup(currentQuiz._id, groupId);
+      dispatch(setCurrentQuiz(updatedQuiz));
+
+      const updatedQuizzes = quizzes.map((q) =>
+        q._id === currentQuiz._id ? updatedQuiz : q
+      );
+      dispatch(setQuizzes(updatedQuizzes));
+
+      setEditingGroupId(null);
+    } catch (err) {
+      console.error("Error deleting question group:", err);
+      setError("Failed to delete question group");
     }
   };
 
@@ -461,6 +617,9 @@ export default function QuizQuestionsEditor() {
     );
   }
 
+  const hasQuestions = currentQuiz.questions.length > 0;
+  const hasGroups = (currentQuiz.questionGroups || []).length > 0;
+
   return (
     <Container>
       {error && <Alert variant="danger" dismissible onClose={() => setError(null)}>{error}</Alert>}
@@ -485,36 +644,72 @@ export default function QuizQuestionsEditor() {
         </Nav.Item>
       </Nav>
 
-      {/* Questions List */}
-      {currentQuiz.questions.length === 0 ? (
+      {/* Empty State */}
+      {!hasQuestions && !hasGroups && (
         <Alert variant="info">
-          No questions yet. Click &quot;+ New Question&quot; to add one.
+          No questions yet. Click &quot;+ New Question&quot; to add one, or &quot;+ New Question Group&quot; to create a group.
         </Alert>
-      ) : (
-        currentQuiz.questions.map((question, index) =>
-          editingQuestionId === question._id ? (
-            <QuestionEditor
-              key={question._id}
-              question={question}
-              onSave={handleSaveQuestion}
-              onCancel={() => setEditingQuestionId(null)}
-              onDelete={() => handleDeleteQuestion(question._id)}
-            />
-          ) : (
-            <QuestionPreview
-              key={question._id}
-              question={question}
-              index={index}
-              onEdit={() => setEditingQuestionId(question._id)}
-            />
-          )
-        )
       )}
 
-      {/* Add Question Button */}
-      <div className="text-center mb-4">
+      {/* Regular Questions List */}
+      {hasQuestions && (
+        <>
+          <h6 className="text-muted mb-3">Individual Questions</h6>
+          {currentQuiz.questions.map((question, index) =>
+            editingQuestionId === question._id ? (
+              <QuestionEditor
+                key={question._id}
+                question={question}
+                onSave={handleSaveQuestion}
+                onCancel={() => setEditingQuestionId(null)}
+                onDelete={() => handleDeleteQuestion(question._id)}
+              />
+            ) : (
+              <QuestionPreview
+                key={question._id}
+                question={question}
+                index={index}
+                onEdit={() => setEditingQuestionId(question._id)}
+              />
+            )
+          )}
+        </>
+      )}
+
+      {/* Question Groups */}
+      {hasGroups && (
+        <>
+          <h6 className="text-muted mb-3 mt-4">Question Groups</h6>
+          {(currentQuiz.questionGroups || []).map((group) =>
+            editingGroupId === group._id ? (
+              <QuestionGroupEditor
+                key={group._id}
+                group={group}
+                onSave={handleSaveQuestionGroup}
+                onCancel={() => setEditingGroupId(null)}
+                onDelete={() => handleDeleteQuestionGroup(group._id)}
+              />
+            ) : (
+              <QuestionGroupPreview
+                key={group._id}
+                group={group}
+                onEdit={() => setEditingGroupId(group._id)}
+              />
+            )
+          )}
+        </>
+      )}
+
+      {/* Add Question Buttons */}
+      <div className="text-center mb-4 d-flex justify-content-center gap-2 flex-wrap">
         <Button variant="outline-secondary" onClick={handleAddQuestion}>
-          + New Question
+          <FaPlus className="me-1" /> New Question
+        </Button>
+        <Button variant="outline-secondary" onClick={handleAddQuestionGroup}>
+          <FaPlus className="me-1" /> New Question Group
+        </Button>
+        <Button variant="outline-secondary" onClick={() => setShowFindQuestions(true)}>
+          <FaSearch className="me-1" /> Find Questions
         </Button>
       </div>
 
@@ -529,6 +724,16 @@ export default function QuizQuestionsEditor() {
           Save
         </Button>
       </div>
+
+      {/* Find Questions Modal */}
+      <FindQuestionsModal
+        show={showFindQuestions}
+        onHide={() => setShowFindQuestions(false)}
+        courseId={cid as string}
+        currentQuizId={qid as string}
+        onAddQuestion={handleAddFoundQuestion}
+        onAddMultipleQuestions={handleAddMultipleFoundQuestions}
+      />
     </Container>
   );
 }

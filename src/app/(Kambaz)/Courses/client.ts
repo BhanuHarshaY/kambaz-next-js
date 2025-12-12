@@ -12,8 +12,8 @@ const ATTEMPTS_API = `${HTTP_SERVER}/api/attempts`;
 
 
 export const deleteModule = async (courseId: string, moduleId: string) => {
- const response = await axios.delete(`${COURSES_API}/${courseId}/modules/${moduleId}`);
- return response.data;
+  const response = await axios.delete(`${COURSES_API}/${courseId}/modules/${moduleId}`);
+  return response.data;
 };
 
 export const fetchAllCourses = async () => {
@@ -85,13 +85,13 @@ export const enrollInCourse = async (userId: string, courseId: string) => {
 };
 
 export const enrollIntoCourse = async (userId: string, courseId: string) => {
- const response = await axiosWithCredentials.post(`${USERS_API}/${userId}/courses/${courseId}`);
- return response.data;
+  const response = await axiosWithCredentials.post(`${USERS_API}/${userId}/courses/${courseId}`);
+  return response.data;
 };
 
 export const unenrollFromTheCourse = async (userId: string, courseId: string) => {
- const response = await axiosWithCredentials.delete(`${USERS_API}/${userId}/courses/${courseId}`);
- return response.data;
+  const response = await axiosWithCredentials.delete(`${USERS_API}/${userId}/courses/${courseId}`);
+  return response.data;
 };
 
 export const unenrollFromCourse = async (enrollmentId: string) => {
@@ -102,8 +102,8 @@ export const unenrollFromCourse = async (enrollmentId: string) => {
 };
 
 export const findUsersForCourse = async (courseId: string) => {
- const response = await axios.get(`${COURSES_API}/${courseId}/users`);
- return response.data;
+  const response = await axios.get(`${COURSES_API}/${courseId}/users`);
+  return response.data;
 };
 
 export const findEnrollmentsForUser = async (userId: string) => {
@@ -159,6 +159,43 @@ export const updateQuestion = async (quizId: string, questionId: string, questio
 
 export const deleteQuestion = async (quizId: string, questionId: string) => {
   const response = await axiosWithCredentials.delete(`${QUIZZES_API}/${quizId}/questions/${questionId}`);
+  return response.data;
+};
+
+// Question Group CRUD
+export const addQuestionGroup = async (quizId: string, group: any) => {
+  const response = await axiosWithCredentials.post(`${QUIZZES_API}/${quizId}/groups`, group);
+  return response.data;
+};
+
+export const updateQuestionGroup = async (quizId: string, groupId: string, group: any) => {
+  const response = await axiosWithCredentials.put(`${QUIZZES_API}/${quizId}/groups/${groupId}`, group);
+  return response.data;
+};
+
+export const deleteQuestionGroup = async (quizId: string, groupId: string) => {
+  const response = await axiosWithCredentials.delete(`${QUIZZES_API}/${quizId}/groups/${groupId}`);
+  return response.data;
+};
+
+export const addQuestionToGroup = async (quizId: string, groupId: string, question: any) => {
+  const response = await axiosWithCredentials.post(`${QUIZZES_API}/${quizId}/groups/${groupId}/questions`, question);
+  return response.data;
+};
+
+export const updateQuestionInGroup = async (quizId: string, groupId: string, questionId: string, question: any) => {
+  const response = await axiosWithCredentials.put(`${QUIZZES_API}/${quizId}/groups/${groupId}/questions/${questionId}`, question);
+  return response.data;
+};
+
+export const deleteQuestionFromGroup = async (quizId: string, groupId: string, questionId: string) => {
+  const response = await axiosWithCredentials.delete(`${QUIZZES_API}/${quizId}/groups/${groupId}/questions/${questionId}`);
+  return response.data;
+};
+
+// Find Questions (search across course)
+export const searchQuestionsInCourse = async (courseId: string, searchTerm: string = "") => {
+  const response = await axiosWithCredentials.get(`${COURSES_API}/${courseId}/questions/search?q=${encodeURIComponent(searchTerm)}`);
   return response.data;
 };
 

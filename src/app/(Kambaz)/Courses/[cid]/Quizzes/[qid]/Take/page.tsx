@@ -20,6 +20,7 @@ interface Answer {
   questionId: string;
   questionType: string;
   selectedChoiceId?: string;
+  selectedChoiceIds?: string[]; // For multiple correct answers
   selectedAnswer?: boolean;
   textAnswers?: string[];
 }
@@ -51,12 +52,12 @@ export default function QuizTake() {
   const [answers, setAnswers] = useState<Answer[]>([]);
   const [submitted, setSubmitted] = useState(false);
   const [shuffledQuestions, setShuffledQuestions] = useState<Question[]>([]);
-  
+
   // Timer state
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
   const [showWarning, setShowWarning] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  
+
   // Access code modal
   const [showAccessCodeModal, setShowAccessCodeModal] = useState(false);
   const [accessCode, setAccessCode] = useState("");
@@ -72,7 +73,7 @@ export default function QuizTake() {
       const result = await client.submitAttempt(attempt._id, timedOut);
       setAttempt(result);
       setSubmitted(true);
-      
+
       if (timerRef.current) {
         clearInterval(timerRef.current);
       }
@@ -159,18 +160,18 @@ export default function QuizTake() {
     timerRef.current = setInterval(() => {
       setTimeRemaining((prev) => {
         if (prev === null) return null;
-        
+
         // Show warning at 5 minutes
         if (prev === 300) {
           setShowWarning(true);
         }
-        
+
         // Auto-submit when time runs out
         if (prev <= 1) {
           submitQuiz(true);
           return 0;
         }
-        
+
         return prev - 1;
       });
     }, 1000);
@@ -204,12 +205,38 @@ export default function QuizTake() {
     return answers.find((a) => a.questionId === questionId);
   };
 
-  // Set answer for multiple choice
+  // Set answer for multiple choice (single selection)
   const setMultipleChoiceAnswer = (questionId: string, choiceId: string) => {
     const answer: Answer = {
       questionId,
       questionType: "MULTIPLE_CHOICE",
       selectedChoiceId: choiceId,
+      selectedChoiceIds: [choiceId],
+    };
+    const existing = answers.filter((a) => a.questionId !== questionId);
+    setAnswers([...existing, answer]);
+    saveAnswerToServer(answer);
+  };
+
+  // Toggle answer for multiple choice (multiple selection)
+  const toggleMultipleChoiceAnswer = (questionId: string, choiceId: string, question: Question) => {
+    const existingAnswer = getAnswer(questionId);
+    const currentIds = existingAnswer?.selectedChoiceIds || [];
+
+    let newIds: string[];
+    if (currentIds.includes(choiceId)) {
+      // Remove this choice
+      newIds = currentIds.filter(id => id !== choiceId);
+    } else {
+      // Add this choice
+      newIds = [...currentIds, choiceId];
+    }
+
+    const answer: Answer = {
+      questionId,
+      questionType: "MULTIPLE_CHOICE",
+      selectedChoiceId: newIds[0] || undefined, // Keep for backward compatibility
+      selectedChoiceIds: newIds,
     };
     const existing = answers.filter((a) => a.questionId !== questionId);
     setAnswers([...existing, answer]);
@@ -257,8 +284,18 @@ export default function QuizTake() {
 
     switch (question.type) {
       case "MULTIPLE_CHOICE":
-        const correctChoice = question.choices.find((c) => c.isCorrect);
-        return correctChoice?._id === answer.selectedChoiceId;
+        const correctChoices = question.choices.filter((c) => c.isCorrect);
+        const selectedIds = answer.selectedChoiceIds || (answer.selectedChoiceId ? [answer.selectedChoiceId] : []);
+
+        if (correctChoices.length === 1) {
+          // Single correct answer
+          return correctChoices[0]._id === selectedIds[0] && selectedIds.length === 1;
+        } else {
+          // Multiple correct - all correct selected and no wrong ones
+          const allCorrectSelected = correctChoices.every(c => selectedIds.includes(c._id));
+          const noWrongSelected = selectedIds.every(id => correctChoices.some(c => c._id === id));
+          return allCorrectSelected && noWrongSelected;
+        }
       case "TRUE_FALSE":
         return question.correctAnswer === answer.selectedAnswer;
       case "FILL_IN_BLANK":
@@ -277,7 +314,7 @@ export default function QuizTake() {
   // Should show correct answers?
   const shouldShowCorrectAnswers = () => {
     if (!currentQuiz || !submitted) return false;
-    
+
     switch (currentQuiz.showCorrectAnswers) {
       case "Immediately":
         return true;
@@ -356,7 +393,7 @@ export default function QuizTake() {
   return (
     <Container>
       <h2>{currentQuiz.title}</h2>
-      
+
       {/* Timer Warning Modal */}
       <Modal show={showWarning} onHide={() => setShowWarning(false)}>
         <Modal.Header closeButton>
@@ -401,8 +438,8 @@ export default function QuizTake() {
       )}
 
       {/* Progress */}
-      <ProgressBar 
-        now={(currentQuestionIndex + 1) / totalQuestions * 100} 
+      <ProgressBar
+        now={(currentQuestionIndex + 1) / totalQuestions * 100}
         label={`Question ${currentQuestionIndex + 1} of ${totalQuestions}`}
         className="mb-4"
       />
@@ -418,29 +455,46 @@ export default function QuizTake() {
             <p className="mb-4">{currentQuestion.question}</p>
 
             {/* Multiple Choice */}
-            {currentQuestion.type === "MULTIPLE_CHOICE" && (
-              <div>
-                {currentQuestion.choices.map((choice) => {
-                  const answer = getAnswer(currentQuestion._id);
-                  const isSelected = answer?.selectedChoiceId === choice._id;
-                  const showCorrect = submitted && showAnswers && choice.isCorrect;
-                  const showWrong = submitted && showAnswers && isSelected && !choice.isCorrect;
+            {currentQuestion.type === "MULTIPLE_CHOICE" && (() => {
+              const correctChoices = currentQuestion.choices.filter(c => c.isCorrect);
+              const hasMultipleCorrect = correctChoices.length > 1;
+              const answer = getAnswer(currentQuestion._id);
+              const selectedIds = answer?.selectedChoiceIds || (answer?.selectedChoiceId ? [answer.selectedChoiceId] : []);
 
-                  return (
-                    <Form.Check
-                      key={choice._id}
-                      type="radio"
-                      name={`q-${currentQuestion._id}`}
-                      label={choice.text}
-                      checked={isSelected}
-                      onChange={() => !submitted && setMultipleChoiceAnswer(currentQuestion._id, choice._id)}
-                      disabled={submitted}
-                      className={`mb-2 ${showCorrect ? "text-success fw-bold" : ""} ${showWrong ? "text-danger" : ""}`}
-                    />
-                  );
-                })}
-              </div>
-            )}
+              return (
+                <div>
+                  {hasMultipleCorrect && (
+                    <p className="text-muted small mb-2">Select all correct answers (partial credit applies)</p>
+                  )}
+                  {currentQuestion.choices.map((choice) => {
+                    const isSelected = selectedIds.includes(choice._id);
+                    const showCorrect = submitted && showAnswers && choice.isCorrect;
+                    const showWrong = submitted && showAnswers && isSelected && !choice.isCorrect;
+
+                    return (
+                      <Form.Check
+                        key={choice._id}
+                        type={hasMultipleCorrect ? "checkbox" : "radio"}
+                        name={`q-${currentQuestion._id}`}
+                        label={choice.text}
+                        checked={isSelected}
+                        onChange={() => {
+                          if (!submitted) {
+                            if (hasMultipleCorrect) {
+                              toggleMultipleChoiceAnswer(currentQuestion._id, choice._id, currentQuestion);
+                            } else {
+                              setMultipleChoiceAnswer(currentQuestion._id, choice._id);
+                            }
+                          }
+                        }}
+                        disabled={submitted}
+                        className={`mb-2 ${showCorrect ? "text-success fw-bold" : ""} ${showWrong ? "text-danger" : ""}`}
+                      />
+                    );
+                  })}
+                </div>
+              );
+            })()}
 
             {/* True/False */}
             {currentQuestion.type === "TRUE_FALSE" && (
@@ -509,7 +563,7 @@ export default function QuizTake() {
         >
           ← Previous
         </Button>
-        
+
         {currentQuestionIndex < totalQuestions - 1 ? (
           <Button
             variant="outline-secondary"
@@ -540,7 +594,7 @@ export default function QuizTake() {
               const hasAnswer = getAnswer(q._id);
               const isCorrect = submitted && showAnswers && isAnswerCorrect(q);
               const isWrong = submitted && showAnswers && !isAnswerCorrect(q);
-              
+
               return (
                 <Button
                   key={q._id}
@@ -550,8 +604,8 @@ export default function QuizTake() {
                         ? "success"
                         : "danger"
                       : hasAnswer
-                      ? "primary"
-                      : "outline-secondary"
+                        ? "primary"
+                        : "outline-secondary"
                   }
                   size="sm"
                   onClick={() => setCurrentQuestionIndex(index)}
