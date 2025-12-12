@@ -66,7 +66,7 @@ export default function QuizEditorDetails() {
     untilDate: "",
   });
 
-  const isFaculty = currentUser?.role === "FACULTY";
+  const isFaculty = currentUser?.role === "FACULTY"|| currentUser?.role === "TA";
 
   // Fetch quiz on load
   useEffect(() => {

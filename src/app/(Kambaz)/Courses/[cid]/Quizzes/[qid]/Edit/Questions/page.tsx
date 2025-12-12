@@ -327,7 +327,7 @@ export default function QuizQuestionsEditor() {
   const [error, setError] = useState<string | null>(null);
   const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
 
-  const isFaculty = currentUser?.role === "FACULTY";
+  const isFaculty = currentUser?.role === "FACULTY"|| currentUser?.role === "TA";
 
   // Fetch quiz on load
   useEffect(() => {

@@ -245,8 +245,11 @@ export default function Dashboard() {
                   href={`/Courses/${course._id}/Home`}
                   className="wd-dashboard-course-link text-decoration-none text-dark"
                   onClick={(e) => {
-                    if (!isEnrolled(course._id) && (isStudent || isTA)) {
+                    const canAccess = isEnrolled(course._id) || isFaculty || isAdmin;
+                    
+                    if (!canAccess) {
                       e.preventDefault();
+                      alert("You must be enrolled in this course to access it.");
                     }
                   }}
                 >

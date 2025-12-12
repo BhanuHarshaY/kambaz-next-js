@@ -38,7 +38,7 @@ export default function QuizPreview() {
   const [score, setScore] = useState(0);
   const [shuffledQuestions, setShuffledQuestions] = useState<Question[]>([]);
 
-  const isFaculty = currentUser?.role === "FACULTY";
+  const isFaculty = currentUser?.role === "FACULTY"|| currentUser?.role === "TA";
 
   // Fetch quiz
   useEffect(() => {
@@ -377,7 +377,7 @@ export default function QuizPreview() {
           variant="outline-secondary"
           onClick={() => router.push(`/Courses/${cid}/Quizzes/${qid}/Edit/Questions`)}
         >
-          ✏️ Keep Editing This Quiz
+           Keep Editing This Quiz
         </Button>
         <Button
           variant="secondary"

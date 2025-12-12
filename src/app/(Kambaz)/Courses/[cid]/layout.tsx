@@ -21,6 +21,8 @@ export default function CoursesLayout({ children }: { children: ReactNode }) {
     if (!currentUser) return;
     
     const userId = currentUser._id;
+    const isFaculty = currentUser.role === "FACULTY";
+    const isAdmin = currentUser.role === "ADMIN";
 
     const isEnrolled = enrollments.some(
       (enrollment: any) =>
@@ -28,7 +30,7 @@ export default function CoursesLayout({ children }: { children: ReactNode }) {
         enrollment.course === cid
     );
     
-    if (!isEnrolled) {
+    if (!isEnrolled && !isFaculty && !isAdmin) {
       alert("You must be enrolled in this course to access it.");
       router.push("/Dashboard");
     }

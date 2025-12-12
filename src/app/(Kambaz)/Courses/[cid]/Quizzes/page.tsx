@@ -18,7 +18,7 @@ import { BsGripVertical, BsPlus } from "react-icons/bs";
 import { IoEllipsisVertical, IoSearch } from "react-icons/io5";
 import { IoMdArrowDropdown } from "react-icons/io";
 import { FaCheckCircle, FaBan, FaRocket } from "react-icons/fa";
-import { RiFilePaper2Line } from "react-icons/ri";
+
 
 export default function Quizzes() {
   const { cid } = useParams();
@@ -29,7 +29,8 @@ export default function Quizzes() {
   const { currentUser } = useSelector((state: RootState) => state.accountReducer);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const isFaculty = currentUser?.role === "FACULTY";
+  const isFaculty = currentUser?.role === "FACULTY"|| currentUser?.role === "TA";
+  
 
   // Fetch quizzes on load
   useEffect(() => {

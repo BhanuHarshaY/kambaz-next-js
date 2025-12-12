@@ -32,7 +32,7 @@ export default function QuizDetails() {
   const [loading, setLoading] = useState(true);
   const [attemptStatus, setAttemptStatus] = useState<AttemptStatus | null>(null);
 
-  const isFaculty = currentUser?.role === "FACULTY";
+  const isFaculty = currentUser?.role === "FACULTY"|| currentUser?.role === "TA";
   const isStudent = currentUser?.role === "STUDENT";
 
   // Fetch quiz details
@@ -111,7 +111,7 @@ export default function QuizDetails() {
               className="me-2"
               onClick={() => router.push(`/Courses/${cid}/Quizzes/${qid}/Edit`)}
             >
-              ✏️ Edit
+               Edit
             </Button>
           </>
         )}
