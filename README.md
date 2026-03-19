@@ -2,8 +2,6 @@
 
 A full-stack Learning Management System inspired by Canvas, built with **Next.js**, **React**, **Node.js**, **Express**, and **MongoDB Atlas**. Kambaz provides a complete academic platform for course management, assignments, quizzes, enrollments, and user administration across four distinct user roles.
 
-> **CS5610 Web Development** | Northeastern University | Section 04
-
 ---
 
 ## Project Metrics
