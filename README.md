@@ -276,10 +276,4 @@ The application includes 4 lab modules demonstrating progressive web development
 - **Lab 3** : JavaScript fundamentals, ES6 features, DOM manipulation
 - **Lab 4** : React state management, events, Redux Toolkit, component composition
 
----
 
-
-
-## License
-
-This project was built as part of CS5610 Web Development coursework at Northeastern University.
